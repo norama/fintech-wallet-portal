@@ -1,8 +1,8 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
 import { signOut } from '@/features/auth/api/authClient'
 import {
@@ -14,11 +14,16 @@ import type { DashboardResponse } from '@/lib/types/api'
 
 export function RawDashboardJson() {
   const router = useRouter()
-  const [isSigningOut, setIsSigningOut] = useState(false)
-  const [signOutError, setSignOutError] = useState<string | null>(null)
   const dashboardQuery = useQuery<DashboardResponse, DashboardRequestError>({
     queryKey: dashboardQueryKey,
     queryFn: fetchDashboard,
+  })
+  const signOutMutation = useMutation({
+    mutationFn: signOut,
+    onSuccess: async () => {
+      await router.push('/sign-in')
+      router.refresh()
+    },
   })
 
   useEffect(() => {
@@ -28,22 +33,13 @@ export function RawDashboardJson() {
   }, [dashboardQuery.error, router])
 
   async function handleSignOut() {
-    setIsSigningOut(true)
-    setSignOutError(null)
-
-    try {
-      await signOut()
-      router.push('/sign-in')
-      router.refresh()
-    } catch (signOutError) {
-      setSignOutError(signOutError instanceof Error ? signOutError.message : 'Unable to sign out')
-      setIsSigningOut(false)
-    }
+    await signOutMutation.mutateAsync()
   }
 
   const isUnauthorized = dashboardQuery.error?.status === 401
   const errorMessage =
-    signOutError ?? (!isUnauthorized && dashboardQuery.error ? dashboardQuery.error.message : null)
+    signOutMutation.error?.message ??
+    (!isUnauthorized && dashboardQuery.error ? dashboardQuery.error.message : null)
 
   return (
     <section className='w-full max-w-5xl rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8'>
@@ -58,9 +54,9 @@ export function RawDashboardJson() {
         <button
           type='button'
           onClick={handleSignOut}
-          disabled={isSigningOut}
+          disabled={signOutMutation.isPending}
           className='cursor-pointer rounded-2xl border border-zinc-300 px-4 py-3 text-sm font-semibold text-zinc-700 transition hover:border-zinc-950 hover:text-zinc-950 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:text-zinc-400'>
-          {isSigningOut ? 'Signing out...' : 'Sign out'}
+          {signOutMutation.isPending ? 'Signing out...' : 'Sign out'}
         </button>
       </div>
 

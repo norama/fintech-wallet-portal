@@ -3,11 +3,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState, type ReactNode } from 'react'
 
-type DashboardQueryProviderProps = {
+type AppQueryProviderProps = {
   children: ReactNode
 }
 
-export function DashboardQueryProvider({ children }: DashboardQueryProviderProps) {
+export function AppQueryProvider({ children }: AppQueryProviderProps) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -15,6 +15,9 @@ export function DashboardQueryProvider({ children }: DashboardQueryProviderProps
           queries: {
             retry: false,
             refetchOnWindowFocus: false,
+          },
+          mutations: {
+            retry: false,
           },
         },
       }),

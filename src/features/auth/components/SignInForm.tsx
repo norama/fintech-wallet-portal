@@ -1,6 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -19,7 +20,6 @@ export function SignInForm() {
   const router = useRouter()
   const [step, setStep] = useState<SignInStep>('email')
   const [challengeId, setChallengeId] = useState('')
-  const [submitError, setSubmitError] = useState<string | null>(null)
   const [userLabel, setUserLabel] = useState<string | null>(null)
 
   const emailForm = useForm<StartSignInInput>({
@@ -37,12 +37,9 @@ export function SignInForm() {
     },
   })
 
-  async function handleStartSignIn(values: StartSignInInput) {
-    setSubmitError(null)
-
-    try {
-      const response = await startSignIn(values)
-
+  const startSignInMutation = useMutation({
+    mutationFn: startSignIn,
+    onSuccess: (response) => {
       setChallengeId(response.challengeId)
       setUserLabel(response.user.fullName)
       codeForm.reset({
@@ -50,26 +47,30 @@ export function SignInForm() {
         code: '',
       })
       setStep('code')
-    } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'Unable to start sign-in')
-    }
+    },
+  })
+
+  const verifyCodeMutation = useMutation({
+    mutationFn: verifyCode,
+    onSuccess: async () => {
+      await router.push('/dashboard')
+      router.refresh()
+    },
+  })
+
+  async function handleStartSignIn(values: StartSignInInput) {
+    await startSignInMutation.mutateAsync(values)
   }
 
   async function handleVerifyCode(values: VerifyCodeInput) {
-    setSubmitError(null)
-
-    try {
-      await verifyCode({
-        ...values,
-        challengeId,
-      })
-
-      router.push('/dashboard')
-      router.refresh()
-    } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'Unable to verify code')
-    }
+    await verifyCodeMutation.mutateAsync({
+      ...values,
+      challengeId,
+    })
   }
+
+  const submitError =
+    (step === 'email' ? startSignInMutation.error : verifyCodeMutation.error)?.message ?? null
 
   return (
     <section className='w-full max-w-md rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm'>
@@ -114,9 +115,9 @@ export function SignInForm() {
 
           <button
             type='submit'
-            disabled={emailForm.formState.isSubmitting}
+            disabled={startSignInMutation.isPending}
             className='w-full cursor-pointer rounded-2xl bg-zinc-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-400'>
-            {emailForm.formState.isSubmitting ? 'Sending code...' : 'Continue'}
+            {startSignInMutation.isPending ? 'Sending code...' : 'Continue'}
           </button>
         </form>
       ) : (
@@ -149,7 +150,8 @@ export function SignInForm() {
             <button
               type='button'
               onClick={() => {
-                setSubmitError(null)
+                startSignInMutation.reset()
+                verifyCodeMutation.reset()
                 setStep('email')
               }}
               className='flex-1 cursor-pointer rounded-2xl border border-zinc-300 px-4 py-3 text-sm font-semibold text-zinc-700 transition hover:border-zinc-950 hover:text-zinc-950'>
@@ -157,9 +159,9 @@ export function SignInForm() {
             </button>
             <button
               type='submit'
-              disabled={codeForm.formState.isSubmitting}
+              disabled={verifyCodeMutation.isPending}
               className='flex-1 cursor-pointer rounded-2xl bg-zinc-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-400'>
-              {codeForm.formState.isSubmitting ? 'Verifying...' : 'Sign in'}
+              {verifyCodeMutation.isPending ? 'Verifying...' : 'Sign in'}
             </button>
           </div>
         </form>
