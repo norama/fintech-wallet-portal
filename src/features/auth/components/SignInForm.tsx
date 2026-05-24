@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 
-import { startSignIn, verifyCode } from '@/features/auth/api/authClient'
+import { getStartSignInMutationOptions, getVerifyCodeMutationOptions } from '@/lib/query/authQuery'
 import {
   startSignInSchema,
   verifyCodeSchema,
@@ -38,7 +38,7 @@ export function SignInForm() {
   })
 
   const startSignInMutation = useMutation({
-    mutationFn: startSignIn,
+    ...getStartSignInMutationOptions(),
     onSuccess: (response) => {
       setChallengeId(response.challengeId)
       setUserLabel(response.user.fullName)
@@ -51,7 +51,7 @@ export function SignInForm() {
   })
 
   const verifyCodeMutation = useMutation({
-    mutationFn: verifyCode,
+    ...getVerifyCodeMutationOptions(),
     onSuccess: async () => {
       await router.push('/dashboard')
       router.refresh()

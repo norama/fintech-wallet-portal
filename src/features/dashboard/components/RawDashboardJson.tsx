@@ -4,22 +4,15 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
-import { signOut } from '@/features/auth/api/authClient'
-import {
-  DashboardRequestError,
-  dashboardQueryKey,
-  fetchDashboard,
-} from '@/features/dashboard/api/dashboardClient'
-import type { DashboardResponse } from '@/lib/types/api'
+import { DashboardRequestError } from '@/features/dashboard/api/dashboardClient'
+import { getSignOutMutationOptions } from '@/lib/query/authQuery'
+import { getDashboardQueryOptions } from '@/lib/query/dashboardQuery'
 
 export function RawDashboardJson() {
   const router = useRouter()
-  const dashboardQuery = useQuery<DashboardResponse, DashboardRequestError>({
-    queryKey: dashboardQueryKey,
-    queryFn: fetchDashboard,
-  })
+  const dashboardQuery = useQuery(getDashboardQueryOptions())
   const signOutMutation = useMutation({
-    mutationFn: signOut,
+    ...getSignOutMutationOptions(),
     onSuccess: async () => {
       await router.push('/sign-in')
       router.refresh()
@@ -27,7 +20,10 @@ export function RawDashboardJson() {
   })
 
   useEffect(() => {
-    if (dashboardQuery.error?.status === 401) {
+    if (
+      dashboardQuery.error instanceof DashboardRequestError &&
+      dashboardQuery.error.status === 401
+    ) {
       router.replace('/sign-in')
     }
   }, [dashboardQuery.error, router])
@@ -36,10 +32,12 @@ export function RawDashboardJson() {
     await signOutMutation.mutateAsync()
   }
 
-  const isUnauthorized = dashboardQuery.error?.status === 401
+  const dashboardError =
+    dashboardQuery.error instanceof DashboardRequestError ? dashboardQuery.error : null
+  const isUnauthorized = dashboardError?.status === 401
   const errorMessage =
     signOutMutation.error?.message ??
-    (!isUnauthorized && dashboardQuery.error ? dashboardQuery.error.message : null)
+    (!isUnauthorized && dashboardError ? dashboardError.message : null)
 
   return (
     <section className='w-full max-w-5xl rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8'>

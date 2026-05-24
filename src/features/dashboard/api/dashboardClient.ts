@@ -21,8 +21,6 @@ export class DashboardRequestError extends Error {
   }
 }
 
-export const dashboardQueryKey = ['dashboard'] as const
-
 export async function fetchDashboard() {
   const response = await fetch('/api/dashboard', {
     method: 'GET',
