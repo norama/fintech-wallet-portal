@@ -6,6 +6,11 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 
+import { Alert } from '@/components/ui/Alert'
+import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import { Field } from '@/components/ui/Field'
+import { Input } from '@/components/ui/Input'
 import { getStartSignInMutationOptions, getVerifyCodeMutationOptions } from '@/lib/query/authQuery'
 import {
   startSignInSchema,
@@ -73,99 +78,110 @@ export function SignInForm() {
     (step === 'email' ? startSignInMutation.error : verifyCodeMutation.error)?.message ?? null
 
   return (
-    <section className='w-full max-w-md rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm'>
-      <div className='space-y-2'>
-        <p className='text-sm font-medium uppercase tracking-[0.2em] text-zinc-500'>Demo Sign In</p>
-        <h1 className='text-3xl font-semibold tracking-tight text-zinc-950'>Fintech Wallet</h1>
-        <p className='text-sm leading-6 text-zinc-600'>
-          Use an existing demo user email, then enter verification code 123456.
-        </p>
-      </div>
-
-      <div className='mt-8 flex gap-2 text-xs font-medium uppercase tracking-[0.16em] text-zinc-500'>
-        <span className={step === 'email' ? 'text-zinc-950' : undefined}>1. Identity</span>
-        <span>/</span>
-        <span className={step === 'code' ? 'text-zinc-950' : undefined}>2. Code</span>
-      </div>
-
-      {submitError ? (
-        <div className='mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700'>
-          {submitError}
+    <div className='w-full max-w-xl lg:justify-self-end'>
+      <Card
+        tone='default'
+        eyebrow='Demo Sign In'
+        title='Fintech Wallet'
+        description='Use an existing demo user email, then complete the fixed verification step to access the portal.'>
+        <div className='flex rounded-full border border-zinc-200 bg-zinc-50 p-1 text-xs font-medium uppercase tracking-[0.16em] text-zinc-500'>
+          <span
+            className={[
+              'flex-1 rounded-full px-3 py-2 text-center transition',
+              step === 'email' ? 'bg-white text-zinc-950 shadow-sm' : '',
+            ].join(' ')}>
+            1. Identity
+          </span>
+          <span
+            className={[
+              'flex-1 rounded-full px-3 py-2 text-center transition',
+              step === 'code' ? 'bg-white text-zinc-950 shadow-sm' : '',
+            ].join(' ')}>
+            2. Code
+          </span>
         </div>
-      ) : null}
 
-      {step === 'email' ? (
-        <form className='mt-6 space-y-5' onSubmit={emailForm.handleSubmit(handleStartSignIn)}>
-          <div className='space-y-2'>
-            <label htmlFor='email' className='text-sm font-medium text-zinc-800'>
-              Email or client email
-            </label>
-            <input
-              id='email'
-              type='email'
-              autoComplete='email'
-              className='w-full rounded-2xl border border-zinc-300 px-4 py-3 text-sm text-zinc-950 outline-none transition focus:border-zinc-950'
-              placeholder='name@company.com'
-              {...emailForm.register('email')}
+        {submitError ? (
+          <Alert tone='danger' title='Sign-in failed' description={submitError} />
+        ) : null}
+
+        {step === 'email' ? (
+          <form className='space-y-5' onSubmit={emailForm.handleSubmit(handleStartSignIn)}>
+            <Field
+              htmlFor='email'
+              label='Email or client email'
+              hint='Use an existing demo user or client email from the seeded dataset.'
+              error={emailForm.formState.errors.email?.message}>
+              <Input
+                id='email'
+                type='email'
+                autoComplete='email'
+                placeholder='name@company.com'
+                tone={emailForm.formState.errors.email ? 'error' : 'default'}
+                aria-invalid={emailForm.formState.errors.email ? true : undefined}
+                {...emailForm.register('email')}
+              />
+            </Field>
+
+            <Button type='submit' block size='lg' disabled={startSignInMutation.isPending}>
+              {startSignInMutation.isPending ? 'Sending code...' : 'Continue'}
+            </Button>
+          </form>
+        ) : (
+          <form className='space-y-5' onSubmit={codeForm.handleSubmit(handleVerifyCode)}>
+            <Alert
+              tone='info'
+              title='Challenge issued'
+              description={`Verification started for ${userLabel ?? 'demo user'}. Use code 123456 to continue.`}
             />
-            {emailForm.formState.errors.email ? (
-              <p className='text-sm text-red-600'>{emailForm.formState.errors.email.message}</p>
-            ) : null}
-          </div>
 
-          <button
-            type='submit'
-            disabled={startSignInMutation.isPending}
-            className='w-full cursor-pointer rounded-2xl bg-zinc-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-400'>
-            {startSignInMutation.isPending ? 'Sending code...' : 'Continue'}
-          </button>
-        </form>
-      ) : (
-        <form className='mt-6 space-y-5' onSubmit={codeForm.handleSubmit(handleVerifyCode)}>
-          <div className='rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-700'>
-            Challenge issued for{' '}
-            <span className='font-semibold text-zinc-950'>{userLabel ?? 'demo user'}</span>.
-          </div>
+            <Field
+              htmlFor='code'
+              label='Verification code'
+              hint='Use the fixed demo code to complete the mocked banking sign-in flow.'
+              error={codeForm.formState.errors.code?.message}>
+              <Input
+                id='code'
+                inputMode='numeric'
+                placeholder='123456'
+                maxLength={6}
+                spacing='code'
+                tone={codeForm.formState.errors.code ? 'error' : 'default'}
+                aria-invalid={codeForm.formState.errors.code ? true : undefined}
+                {...codeForm.register('code')}
+              />
+            </Field>
 
-          <div className='space-y-2'>
-            <label htmlFor='code' className='text-sm font-medium text-zinc-800'>
-              Verification code
-            </label>
             <input
-              id='code'
-              inputMode='numeric'
-              className='w-full rounded-2xl border border-zinc-300 px-4 py-3 text-sm tracking-[0.3em] text-zinc-950 outline-none transition focus:border-zinc-950'
-              placeholder='123456'
-              maxLength={6}
-              {...codeForm.register('code')}
+              type='hidden'
+              {...codeForm.register('challengeId')}
+              value={challengeId}
+              readOnly
             />
-            {codeForm.formState.errors.code ? (
-              <p className='text-sm text-red-600'>{codeForm.formState.errors.code.message}</p>
-            ) : null}
-          </div>
 
-          <input type='hidden' {...codeForm.register('challengeId')} value={challengeId} readOnly />
-
-          <div className='flex gap-3'>
-            <button
-              type='button'
-              onClick={() => {
-                startSignInMutation.reset()
-                verifyCodeMutation.reset()
-                setStep('email')
-              }}
-              className='flex-1 cursor-pointer rounded-2xl border border-zinc-300 px-4 py-3 text-sm font-semibold text-zinc-700 transition hover:border-zinc-950 hover:text-zinc-950'>
-              Back
-            </button>
-            <button
-              type='submit'
-              disabled={verifyCodeMutation.isPending}
-              className='flex-1 cursor-pointer rounded-2xl bg-zinc-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-400'>
-              {verifyCodeMutation.isPending ? 'Verifying...' : 'Sign in'}
-            </button>
-          </div>
-        </form>
-      )}
-    </section>
+            <div className='flex gap-3'>
+              <div className='flex-1'>
+                <Button
+                  type='button'
+                  variant='secondary'
+                  block
+                  onClick={() => {
+                    startSignInMutation.reset()
+                    verifyCodeMutation.reset()
+                    setStep('email')
+                  }}>
+                  Back
+                </Button>
+              </div>
+              <div className='flex-1'>
+                <Button type='submit' block disabled={verifyCodeMutation.isPending}>
+                  {verifyCodeMutation.isPending ? 'Verifying...' : 'Sign in'}
+                </Button>
+              </div>
+            </div>
+          </form>
+        )}
+      </Card>
+    </div>
   )
 }
