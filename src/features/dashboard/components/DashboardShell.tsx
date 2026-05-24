@@ -51,7 +51,7 @@ export function DashboardShell({ eyebrow, title, description, children }: Dashbo
 
   return (
     <section className='w-full max-w-7xl space-y-6'>
-      <header className='h-96 overflow-hidden rounded-4xl border border-zinc-200 bg-white/95 p-6 shadow-sm backdrop-blur sm:h-84 sm:p-8 lg:h-72'>
+      <header className='h-80 overflow-hidden rounded-4xl border border-zinc-200 bg-white/95 p-6 shadow-sm backdrop-blur sm:h-84 sm:p-8 lg:h-72'>
         <div className='flex h-full flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-8'>
           <div className='flex flex-1 flex-col justify-between gap-5 lg:min-h-0'>
             <div className='h-40 overflow-hidden sm:h-32 lg:h-34'>
@@ -64,7 +64,7 @@ export function DashboardShell({ eyebrow, title, description, children }: Dashbo
               <p className='mt-3 max-w-2xl text-sm leading-6 text-zinc-600'>{description}</p>
             </div>
 
-            <nav className='flex min-h-11 flex-wrap items-start gap-2 lg:min-h-11'>
+            <nav className='flex min-h-8 flex-wrap items-start gap-2 lg:min-h-8'>
               {navigationItems.map((item) => {
                 const isActive = isActiveRoute(pathname, item.href)
 

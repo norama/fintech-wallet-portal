@@ -19,7 +19,7 @@ import {
   UserRoleBadge,
   WalletStatusBadge,
 } from '@/features/dashboard/components/DashboardBadges'
-import { formatDateTime, formatMoney } from '@/lib/formatters'
+import { formatDateTime, formatMaskedReference, formatMoney } from '@/lib/formatters'
 import { getDashboardQueryOptions } from '@/lib/query/dashboardQuery'
 import type { CurrencyCode } from '@/lib/supabase/database.types'
 import type { DashboardResponse } from '@/lib/types/api'
@@ -294,8 +294,10 @@ export function DashboardOverview() {
                       </dd>
                     </div>
                     <div className='min-w-0'>
-                      <dt className='text-zinc-500'>Wallet ID</dt>
-                      <dd className='mt-1 break-all font-medium text-zinc-900'>{wallet.id}</dd>
+                      <dt className='text-zinc-500'>Wallet reference</dt>
+                      <dd className='mt-1 font-medium text-zinc-900'>
+                        {formatMaskedReference(wallet.id)}
+                      </dd>
                     </div>
                   </dl>
                 </Card>
@@ -352,7 +354,12 @@ export function DashboardOverview() {
                             </p>
                             <p>Created: {formatDateTime(transaction.createdAt)}</p>
                             {transaction.counterpartyRef ? (
-                              <p>Counterparty ref: {transaction.counterpartyRef}</p>
+                              <p>
+                                Counterparty reference:{' '}
+                                <span className='font-medium text-zinc-900'>
+                                  {formatMaskedReference(transaction.counterpartyRef)}
+                                </span>
+                              </p>
                             ) : null}
                           </div>
                         </div>
