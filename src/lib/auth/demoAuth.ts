@@ -1,40 +1,33 @@
 import 'server-only'
 
-import type { AppUserRow, SignInChallengeRow } from '@/lib/supabase/database.types'
+import type { SignInChallengeRow, UserRow } from '@/lib/supabase/database.types'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import type { BasicUserInfo } from '@/lib/types/api'
 
-export type BasicUserInfo = {
-  id: string
-  email: string | null
-  companyId: string | null
-  fullName: string | null
-  role: string | null
-}
-
-function isActiveUser(user: AppUserRow) {
+function isActiveUser(user: UserRow) {
   return user.status === 'active'
 }
 
-export function getUserId(user: AppUserRow) {
+export function getUserId(user: UserRow) {
   return user.id
 }
 
-export function toBasicUserInfo(user: AppUserRow): BasicUserInfo {
+export function toBasicUserInfo(user: UserRow): BasicUserInfo {
   const id = getUserId(user)
 
   return {
     id,
     email: user.email,
-    companyId: user.company_id,
+    accountId: user.account_id,
     fullName: user.full_name,
     role: user.role,
   }
 }
 
-export async function findActiveUserByEmail(email: string): Promise<AppUserRow | null> {
+export async function findActiveUserByEmail(email: string): Promise<UserRow | null> {
   const supabase = createSupabaseServerClient()
   const { data, error } = await supabase
-    .from('app_users')
+    .from('users')
     .select('*')
     .ilike('email', email)
     .limit(1)
@@ -51,13 +44,9 @@ export async function findActiveUserByEmail(email: string): Promise<AppUserRow |
   return data
 }
 
-export async function findActiveUserById(userId: string): Promise<AppUserRow | null> {
+export async function findActiveUserById(userId: string): Promise<UserRow | null> {
   const supabase = createSupabaseServerClient()
-  const { data, error } = await supabase
-    .from('app_users')
-    .select('*')
-    .eq('id', userId)
-    .maybeSingle()
+  const { data, error } = await supabase.from('users').select('*').eq('id', userId).maybeSingle()
 
   if (error) {
     throw new Error(`Failed to load app user by id: ${error.message}`)

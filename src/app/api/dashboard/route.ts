@@ -1,7 +1,7 @@
 import { jsonError, toCamelCaseDeep } from '@/lib/api/responses'
 import { findActiveUserById, toBasicUserInfo } from '@/lib/auth/demoAuth'
 import { readDemoSessionUserId } from '@/lib/auth/demoSession'
-import type { CompanyRow, TransactionRow, WalletRow } from '@/lib/supabase/database.types'
+import type { AccountRow, TransactionRow, WalletRow } from '@/lib/supabase/database.types'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
@@ -21,8 +21,8 @@ export async function GET() {
       return jsonError(401, 'UNAUTHORIZED', 'Your session is no longer valid')
     }
 
-    const companyId = user.company_id
-    const walletQuery = await supabase.from('wallets').select('*').eq('company_id', companyId)
+    const accountId = user.account_id
+    const walletQuery = await supabase.from('wallets').select('*').eq('account_id', accountId)
 
     if (walletQuery.error) {
       throw new Error(`Failed to load wallets: ${walletQuery.error.message}`)
@@ -32,16 +32,16 @@ export async function GET() {
     const walletIds = wallets.map((wallet) => wallet.id)
 
     const companyQuery = await supabase
-      .from('companies')
+      .from('accounts')
       .select('*')
-      .eq('id', companyId)
+      .eq('id', accountId)
       .maybeSingle()
 
     if (companyQuery.error) {
-      throw new Error(`Failed to load company: ${companyQuery.error.message}`)
+      throw new Error(`Failed to load account: ${companyQuery.error.message}`)
     }
 
-    const company: CompanyRow | null = companyQuery.data
+    const account: AccountRow | null = companyQuery.data
 
     let transactions: TransactionRow[] = []
 
@@ -63,7 +63,7 @@ export async function GET() {
     return Response.json(
       toCamelCaseDeep({
         user: toBasicUserInfo(user),
-        company,
+        account,
         wallets,
         transactions,
       }),

@@ -4,7 +4,8 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 import { signOut } from '@/features/auth/api/authClient'
-import { fetchDashboard, type DashboardResponse } from '@/features/dashboard/api/dashboardClient'
+import { fetchDashboard } from '@/features/dashboard/api/dashboardClient'
+import type { DashboardResponse } from '@/lib/types/api'
 
 export function RawDashboardJson() {
   const router = useRouter()

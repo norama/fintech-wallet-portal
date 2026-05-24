@@ -1,15 +1,12 @@
+import type { DashboardResponse } from '@/lib/types/api'
+
+export type { DashboardResponse } from '@/lib/types/api'
+
 type DashboardApiError = {
   error?: {
     code?: string
     message?: string
   }
-}
-
-export type DashboardResponse = {
-  user: Record<string, unknown>
-  company: Record<string, unknown> | null
-  wallets: Record<string, unknown>[]
-  transactions: Record<string, unknown>[]
 }
 
 export async function fetchDashboard() {

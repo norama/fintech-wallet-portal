@@ -1,3 +1,4 @@
+import type { StartSignInResponse, VerifyCodeResponse } from '@/lib/types/api'
 import type { StartSignInInput, VerifyCodeInput } from '@/lib/validation/authSchemas'
 
 type ApiErrorResponse = {
@@ -5,22 +6,6 @@ type ApiErrorResponse = {
     code?: string
     message?: string
   }
-}
-
-export type StartSignInResponse = {
-  challengeId: string
-  user: {
-    id: string
-    email: string | null
-    companyId: string | null
-    firstName: string | null
-    lastName: string | null
-    fullName: string
-  }
-}
-
-export type VerifyCodeResponse = {
-  user: StartSignInResponse['user']
 }
 
 async function readJson<T>(response: Response) {
