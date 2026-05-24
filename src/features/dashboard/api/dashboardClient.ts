@@ -2,12 +2,26 @@ import type { DashboardResponse } from '@/lib/types/api'
 
 export type { DashboardResponse } from '@/lib/types/api'
 
-type DashboardApiError = {
+type DashboardApiErrorResponse = {
   error?: {
     code?: string
     message?: string
   }
 }
+
+export class DashboardRequestError extends Error {
+  status: number
+  code: string | null
+
+  constructor(message: string, status: number, code: string | null = null) {
+    super(message)
+    this.name = 'DashboardRequestError'
+    this.status = status
+    this.code = code
+  }
+}
+
+export const dashboardQueryKey = ['dashboard'] as const
 
 export async function fetchDashboard() {
   const response = await fetch('/api/dashboard', {
@@ -16,31 +30,23 @@ export async function fetchDashboard() {
     cache: 'no-store',
   })
 
-  if (response.status === 401) {
-    return {
-      status: 401 as const,
-      data: null,
-      message: 'Unauthorized',
-    }
-  }
-
   const body = (await response.json().catch(() => null)) as
     | DashboardResponse
-    | DashboardApiError
+    | DashboardApiErrorResponse
     | null
 
   if (!response.ok) {
+    const code =
+      body && typeof body === 'object' && 'error' in body && body.error?.code
+        ? body.error.code
+        : null
     const message =
       body && typeof body === 'object' && 'error' in body && body.error?.message
         ? body.error.message
         : 'Unable to load dashboard'
 
-    throw new Error(message)
+    throw new DashboardRequestError(message, response.status, code)
   }
 
-  return {
-    status: 200 as const,
-    data: body as DashboardResponse,
-    message: null,
-  }
+  return body as DashboardResponse
 }

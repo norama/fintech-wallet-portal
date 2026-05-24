@@ -1,72 +1,49 @@
 'use client'
 
+import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 import { signOut } from '@/features/auth/api/authClient'
-import { fetchDashboard } from '@/features/dashboard/api/dashboardClient'
+import {
+  DashboardRequestError,
+  dashboardQueryKey,
+  fetchDashboard,
+} from '@/features/dashboard/api/dashboardClient'
 import type { DashboardResponse } from '@/lib/types/api'
 
 export function RawDashboardJson() {
   const router = useRouter()
-  const [dashboard, setDashboard] = useState<DashboardResponse | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [isSigningOut, setIsSigningOut] = useState(false)
+  const [signOutError, setSignOutError] = useState<string | null>(null)
+  const dashboardQuery = useQuery<DashboardResponse, DashboardRequestError>({
+    queryKey: dashboardQueryKey,
+    queryFn: fetchDashboard,
+  })
 
   useEffect(() => {
-    let isMounted = true
-
-    async function loadDashboard() {
-      setIsLoading(true)
-      setError(null)
-
-      try {
-        const result = await fetchDashboard()
-
-        if (!isMounted) {
-          return
-        }
-
-        if (result.status === 401) {
-          router.replace('/sign-in')
-          return
-        }
-
-        setDashboard(result.data)
-      } catch (loadError) {
-        if (!isMounted) {
-          return
-        }
-
-        setError(loadError instanceof Error ? loadError.message : 'Unable to load dashboard')
-      } finally {
-        if (isMounted) {
-          setIsLoading(false)
-        }
-      }
+    if (dashboardQuery.error?.status === 401) {
+      router.replace('/sign-in')
     }
-
-    void loadDashboard()
-
-    return () => {
-      isMounted = false
-    }
-  }, [router])
+  }, [dashboardQuery.error, router])
 
   async function handleSignOut() {
     setIsSigningOut(true)
-    setError(null)
+    setSignOutError(null)
 
     try {
       await signOut()
       router.push('/sign-in')
       router.refresh()
     } catch (signOutError) {
-      setError(signOutError instanceof Error ? signOutError.message : 'Unable to sign out')
+      setSignOutError(signOutError instanceof Error ? signOutError.message : 'Unable to sign out')
       setIsSigningOut(false)
     }
   }
+
+  const isUnauthorized = dashboardQuery.error?.status === 401
+  const errorMessage =
+    signOutError ?? (!isUnauthorized && dashboardQuery.error ? dashboardQuery.error.message : null)
 
   return (
     <section className='w-full max-w-5xl rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8'>
@@ -87,12 +64,14 @@ export function RawDashboardJson() {
         </button>
       </div>
 
-      {isLoading ? <p className='mt-6 text-sm text-zinc-600'>Loading dashboard...</p> : null}
-      {error ? <p className='mt-6 text-sm text-red-600'>{error}</p> : null}
+      {dashboardQuery.isPending ? (
+        <p className='mt-6 text-sm text-zinc-600'>Loading dashboard...</p>
+      ) : null}
+      {errorMessage ? <p className='mt-6 text-sm text-red-600'>{errorMessage}</p> : null}
 
-      {dashboard ? (
+      {dashboardQuery.data ? (
         <pre className='mt-6 overflow-x-auto rounded-3xl bg-zinc-950 p-6 text-sm leading-7 text-zinc-100'>
-          {JSON.stringify(dashboard, null, 2)}
+          {JSON.stringify(dashboardQuery.data, null, 2)}
         </pre>
       ) : null}
     </section>
