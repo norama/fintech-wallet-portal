@@ -7,6 +7,7 @@ import { useEffect } from 'react'
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { SkeletonCard } from '@/components/ui/Skeleton'
 import { DashboardRequestError } from '@/features/dashboard/api/dashboardClient'
 import {
   AccountTypeBadge,
@@ -117,35 +118,45 @@ export function DashboardOverview() {
               { tone: 'alert' as const, title: 'Loading alerts' },
               { tone: 'activity' as const, title: 'Loading activity summary' },
             ].map((item) => (
-              <Card key={item.title} tone={item.tone} title={item.title} padding='md'>
-                <div className='animate-pulse space-y-3'>
-                  <div className='h-4 w-24 rounded bg-zinc-200' />
-                  <div className='h-7 w-32 rounded bg-zinc-200' />
-                  <div className='h-4 w-full rounded bg-zinc-200' />
-                </div>
-              </Card>
+              <SkeletonCard
+                key={item.title}
+                tone={item.tone}
+                title={item.title}
+                padding='md'
+                lines={[
+                  { widthClassName: 'w-24' },
+                  { widthClassName: 'w-32', heightClassName: 'h-7' },
+                  { widthClassName: 'w-full' },
+                ]}
+              />
             ))}
           </section>
 
           <section className='grid gap-6 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3'>
             {Array.from({ length: 3 }).map((_, index) => (
-              <Card key={index} tone='wallet' eyebrow='Wallet balance' title='Loading wallet'>
-                <div className='animate-pulse space-y-3'>
-                  <div className='h-4 w-24 rounded bg-zinc-200' />
-                  <div className='h-8 w-40 rounded bg-zinc-200' />
-                  <div className='h-4 w-28 rounded bg-zinc-200' />
-                </div>
-              </Card>
+              <SkeletonCard
+                key={index}
+                tone='wallet'
+                eyebrow='Wallet balance'
+                title='Loading wallet'
+                lines={[
+                  { widthClassName: 'w-24' },
+                  { widthClassName: 'w-40', heightClassName: 'h-8' },
+                  { widthClassName: 'w-28' },
+                ]}
+              />
             ))}
           </section>
 
-          <Card tone='transaction' title='Loading recent transactions'>
-            <div className='animate-pulse space-y-3'>
-              <div className='h-4 w-40 rounded bg-zinc-200' />
-              <div className='h-4 w-full rounded bg-zinc-200' />
-              <div className='h-4 w-5/6 rounded bg-zinc-200' />
-            </div>
-          </Card>
+          <SkeletonCard
+            tone='transaction'
+            title='Loading recent transactions'
+            lines={[
+              { widthClassName: 'w-40' },
+              { widthClassName: 'w-full' },
+              { widthClassName: 'w-5/6' },
+            ]}
+          />
         </div>
       ) : null}
 

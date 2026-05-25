@@ -1,5 +1,5 @@
 import { DashboardShell } from '@/features/dashboard/components/DashboardShell'
-import { FeaturePlaceholder } from '@/features/dashboard/components/FeaturePlaceholder'
+import { TransactionsPageClient } from '@/features/transactions/components/TransactionsPageClient'
 import { requireDemoSessionUserId } from '@/lib/auth/requireDemoSession'
 
 export default async function TransactionsPage() {
@@ -11,12 +11,7 @@ export default async function TransactionsPage() {
         eyebrow='Wallet operations overview'
         title='Transactions'
         description='This route will become the dedicated transaction workspace with richer filtering and operational actions.'>
-        <FeaturePlaceholder
-          eyebrow='Transaction operations'
-          title='Transaction center coming next'
-          description='The current dashboard already surfaces recent transactions. This page is reserved for the fuller transaction list and review workflows.'
-          nextStep='Add server-side filtering, grouping, and pagination for transaction history once the next slice is defined.'
-        />
+        <TransactionsPageClient />
       </DashboardShell>
     </main>
   )

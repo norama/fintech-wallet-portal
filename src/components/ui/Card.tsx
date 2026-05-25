@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-type CardTone =
+export type CardTone =
   | 'default'
   | 'subtle'
   | 'accent'
@@ -9,7 +9,7 @@ type CardTone =
   | 'status'
   | 'activity'
   | 'alert'
-type CardPadding = 'md' | 'lg'
+export type CardPadding = 'md' | 'lg'
 
 type CardProps = {
   children: ReactNode
