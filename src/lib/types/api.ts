@@ -8,6 +8,7 @@ import type {
   TransactionStatus,
   TransactionType,
   UserRole,
+  WalletRow,
   WalletStatus,
 } from '@/lib/supabase/database.types'
 
@@ -63,6 +64,42 @@ export type DashboardResponse = {
   account: DashboardAccount | null
   wallets: DashboardWallet[]
   transactions: DashboardTransaction[]
+}
+
+export type TransactionsListItem = {
+  id: string
+  accountId: string
+  walletId: string
+  walletName: string | null
+  direction: TransactionDirection
+  transactionType: TransactionType
+  counterpartyType: CounterpartyType
+  counterpartyName: string
+  counterpartyRef: string | null
+  amountMinor: number
+  currency: CurrencyCode
+  status: TransactionStatus
+  reference: string
+  createdAt: string
+  completedAt: string | null
+}
+
+export type TransactionsFilterWallet = {
+  id: WalletRow['id']
+  name: WalletRow['name']
+  currency: WalletRow['currency']
+  status: WalletRow['status']
+}
+
+export type TransactionsListResponse = {
+  items: TransactionsListItem[]
+  page: number
+  pageSize: number
+  totalCount: number
+  pageCount: number
+  filters: {
+    wallets: TransactionsFilterWallet[]
+  }
 }
 
 export type StartSignInResponse = {
