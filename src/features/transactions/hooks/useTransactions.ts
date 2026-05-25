@@ -3,19 +3,10 @@
 import { queryOptions, useQuery } from '@tanstack/react-query'
 
 import { fetchTransactions } from '@/features/transactions/api/transactionsClient'
-import type { TransactionsQueryParams } from '@/features/transactions/types'
-
-function normalizeTransactionsQueryParams(params: TransactionsQueryParams = {}) {
-  return {
-    page: params.page ?? 1,
-    pageSize: params.pageSize ?? 10,
-    search: params.search?.trim() || undefined,
-    walletId: params.walletId,
-    status: params.status,
-    direction: params.direction,
-    transactionType: params.transactionType,
-  }
-}
+import {
+  normalizeTransactionsQueryParams,
+  type TransactionsQueryParams,
+} from '@/features/transactions/types'
 
 export const transactionsQueryKeys = {
   list: (params: TransactionsQueryParams = {}) => {

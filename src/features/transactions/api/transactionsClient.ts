@@ -1,6 +1,11 @@
 import type {
+  NormalizedTransactionsQueryParams,
   TransactionsListResponse,
   TransactionsQueryParams,
+} from '@/features/transactions/types'
+import {
+  normalizeTransactionsQueryParams,
+  toTransactionsSearchParams,
 } from '@/features/transactions/types'
 
 type TransactionsApiErrorResponse = {
@@ -22,44 +27,17 @@ export class TransactionsRequestError extends Error {
   }
 }
 
-function buildTransactionsUrl(params: TransactionsQueryParams = {}) {
-  const searchParams = new URLSearchParams()
-
-  if (params.page !== undefined) {
-    searchParams.set('page', String(params.page))
-  }
-
-  if (params.pageSize !== undefined) {
-    searchParams.set('pageSize', String(params.pageSize))
-  }
-
-  if (params.search) {
-    searchParams.set('search', params.search)
-  }
-
-  if (params.walletId) {
-    searchParams.set('walletId', params.walletId)
-  }
-
-  if (params.status) {
-    searchParams.set('status', params.status)
-  }
-
-  if (params.direction) {
-    searchParams.set('direction', params.direction)
-  }
-
-  if (params.transactionType) {
-    searchParams.set('transactionType', params.transactionType)
-  }
-
+function buildTransactionsUrl(params: NormalizedTransactionsQueryParams) {
+  const searchParams = toTransactionsSearchParams(params)
   const queryString = searchParams.toString()
 
   return queryString.length > 0 ? `/api/transactions?${queryString}` : '/api/transactions'
 }
 
 export async function fetchTransactions(params: TransactionsQueryParams = {}) {
-  const response = await fetch(buildTransactionsUrl(params), {
+  const normalized = normalizeTransactionsQueryParams(params)
+
+  const response = await fetch(buildTransactionsUrl(normalized), {
     method: 'GET',
     credentials: 'include',
     cache: 'no-store',
