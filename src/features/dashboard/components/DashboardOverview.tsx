@@ -8,6 +8,7 @@ import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { SkeletonCard } from '@/components/ui/Skeleton'
+import { TransactionAmount } from '@/components/ui/TransactionAmount'
 import { DashboardRequestError } from '@/features/dashboard/api/dashboardClient'
 import {
   AccountTypeBadge,
@@ -22,7 +23,6 @@ import {
 } from '@/features/dashboard/components/DashboardBadges'
 import { formatDateTime, formatMaskedReference, formatMoney } from '@/lib/formatters'
 import { getDashboardQueryOptions } from '@/lib/query/dashboardQuery'
-import type { CurrencyCode } from '@/lib/supabase/database.types'
 import type { DashboardResponse } from '@/lib/types/api'
 
 function buildActivityAlerts(data: DashboardResponse) {
@@ -76,15 +76,6 @@ function buildActivityAlerts(data: DashboardResponse) {
   }
 
   return alerts.slice(0, 3)
-}
-
-function getSignedAmountLabel(
-  amountMinor: number,
-  currency: CurrencyCode,
-  direction: 'incoming' | 'outgoing',
-) {
-  const sign = direction === 'incoming' ? '+' : '-'
-  return `${sign}${formatMoney(amountMinor, currency)}`
 }
 
 export function DashboardOverview() {
@@ -376,19 +367,13 @@ export function DashboardOverview() {
                         </div>
 
                         <div className='text-left lg:text-right'>
-                          <p
-                            className={[
-                              'text-2xl font-semibold tracking-tight',
-                              transaction.direction === 'incoming'
-                                ? 'text-emerald-700'
-                                : 'text-zinc-950',
-                            ].join(' ')}>
-                            {getSignedAmountLabel(
-                              transaction.amountMinor,
-                              transaction.currency,
-                              transaction.direction,
-                            )}
-                          </p>
+                          <TransactionAmount
+                            amountMinor={transaction.amountMinor}
+                            currency={transaction.currency}
+                            direction={transaction.direction}
+                            size='large'
+                            align='right'
+                          />
                           <p className='mt-1 text-sm text-zinc-600'>
                             {transaction.completedAt
                               ? `Completed ${formatDateTime(transaction.completedAt)}`

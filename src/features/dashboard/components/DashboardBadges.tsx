@@ -12,7 +12,10 @@ import type {
 } from '@/lib/supabase/database.types'
 
 function formatLabel(value: string) {
-  return value.replace(/_/g, ' ')
+  return value
+    .split('_')
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ')
 }
 
 export function CurrencyPill({ currency }: { currency: CurrencyCode }) {

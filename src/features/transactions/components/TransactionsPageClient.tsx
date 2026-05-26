@@ -7,8 +7,8 @@ import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
-import { SkeletonCard } from '@/components/ui/Skeleton'
 import { TransactionsRequestError } from '@/features/transactions/api/transactionsClient'
+import { TransactionsHistoryView } from '@/features/transactions/components/TransactionsHistoryView'
 import { useTransactions } from '@/features/transactions/hooks/useTransactions'
 import {
   DEFAULT_TRANSACTIONS_PAGE,
@@ -230,51 +230,7 @@ export function TransactionsPageClient() {
             </Button>
           </div>
         </div>
-
-        <div className='flex flex-col gap-3 rounded-2xl border border-violet-200 bg-white/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-between'>
-          <p className='text-sm text-zinc-700'>
-            Page {transactionsQuery.data?.page ?? activeFilters.page} of{' '}
-            {transactionsQuery.data?.pageCount ?? '...'}
-          </p>
-          <div className='flex gap-3'>
-            <Button
-              variant='secondary'
-              size='sm'
-              disabled={activeFilters.page <= DEFAULT_TRANSACTIONS_PAGE}
-              onClick={() => {
-                updateFilters({ page: activeFilters.page - 1 }, { resetPage: false })
-              }}>
-              Previous
-            </Button>
-            <Button
-              variant='secondary'
-              size='sm'
-              disabled={
-                !transactionsQuery.data || activeFilters.page >= transactionsQuery.data.pageCount
-              }
-              onClick={() => {
-                updateFilters({ page: activeFilters.page + 1 }, { resetPage: false })
-              }}>
-              Next
-            </Button>
-          </div>
-        </div>
       </Card>
-
-      {transactionsQuery.isPending ? (
-        <SkeletonCard
-          tone='transaction'
-          eyebrow='Transactions API'
-          title='Loading transactions payload'
-          description='Fetching the first page of server-scoped transaction history.'
-          lines={[
-            { widthClassName: 'w-40' },
-            { widthClassName: 'w-full' },
-            { widthClassName: 'w-11/12' },
-            { widthClassName: 'w-10/12' },
-          ]}
-        />
-      ) : null}
 
       {errorMessage ? (
         <Alert
@@ -289,17 +245,17 @@ export function TransactionsPageClient() {
         />
       ) : null}
 
-      {transactionsQuery.data ? (
-        <Card
-          tone='transaction'
-          eyebrow='Transactions API'
-          title='Raw transaction payload'
-          description='This is the typed JSON response from /api/transactions using TanStack Query and the active URL filters.'>
-          <pre className='overflow-x-auto rounded-2xl border border-violet-200 bg-white/70 p-4 text-xs leading-6 text-zinc-800'>
-            {JSON.stringify(transactionsQuery.data, null, 2)}
-          </pre>
-        </Card>
-      ) : null}
+      <TransactionsHistoryView
+        data={transactionsQuery.data}
+        isPending={transactionsQuery.isPending}
+        page={activeFilters.page}
+        onPreviousPage={() => {
+          updateFilters({ page: activeFilters.page - 1 }, { resetPage: false })
+        }}
+        onNextPage={() => {
+          updateFilters({ page: activeFilters.page + 1 }, { resetPage: false })
+        }}
+      />
     </div>
   )
 }
