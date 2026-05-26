@@ -8,7 +8,7 @@ import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/Button'
 import { getSignOutMutationOptions } from '@/lib/query/authQuery'
 
-type DashboardShellProps = {
+type ShellProps = {
   eyebrow: string
   title: string
   description: string
@@ -34,7 +34,7 @@ function isActiveRoute(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 
-export function DashboardShell({ eyebrow, title, description, children }: DashboardShellProps) {
+export function Shell({ eyebrow, title, description, children }: ShellProps) {
   const pathname = usePathname()
   const router = useRouter()
   const signOutMutation = useMutation({

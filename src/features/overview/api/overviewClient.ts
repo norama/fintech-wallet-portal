@@ -1,6 +1,6 @@
-import type { DashboardResponse } from '@/lib/types/api'
+import type { OverviewResponse } from '@/lib/types/api'
 
-export type { DashboardResponse } from '@/lib/types/api'
+export type { OverviewResponse } from '@/lib/types/api'
 
 type DashboardApiErrorResponse = {
   error?: {
@@ -9,19 +9,19 @@ type DashboardApiErrorResponse = {
   }
 }
 
-export class DashboardRequestError extends Error {
+export class OverviewRequestError extends Error {
   status: number
   code: string | null
 
   constructor(message: string, status: number, code: string | null = null) {
     super(message)
-    this.name = 'DashboardRequestError'
+    this.name = 'OverviewRequestError'
     this.status = status
     this.code = code
   }
 }
 
-export async function fetchDashboard() {
+export async function fetchOverview() {
   const response = await fetch('/api/dashboard', {
     method: 'GET',
     credentials: 'include',
@@ -29,7 +29,7 @@ export async function fetchDashboard() {
   })
 
   const body = (await response.json().catch(() => null)) as
-    | DashboardResponse
+    | OverviewResponse
     | DashboardApiErrorResponse
     | null
 
@@ -41,10 +41,10 @@ export async function fetchDashboard() {
     const message =
       body && typeof body === 'object' && 'error' in body && body.error?.message
         ? body.error.message
-        : 'Unable to load dashboard'
+        : 'Unable to load overview'
 
-    throw new DashboardRequestError(message, response.status, code)
+    throw new OverviewRequestError(message, response.status, code)
   }
 
-  return body as DashboardResponse
+  return body as OverviewResponse
 }

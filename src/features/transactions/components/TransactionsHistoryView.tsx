@@ -13,7 +13,7 @@ import {
   TransactionDirectionBadge,
   TransactionStatusBadge,
   TransactionTypeBadge,
-} from '@/features/dashboard/components/DashboardBadges'
+} from '@/features/overview/components/Badges'
 import type { TransactionsListResponse } from '@/features/transactions/types'
 import { formatDateTime } from '@/lib/formatters'
 import type { CounterpartyType, TransactionStatus } from '@/lib/supabase/database.types'

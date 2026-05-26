@@ -22,7 +22,7 @@ export type BasicUserInfo = {
 
 export type AuthUserResponse = BasicUserInfo
 
-export type DashboardAccount = {
+export type OverviewAccount = {
   id: AccountRow['id']
   displayName: AccountRow['display_name']
   accountType: AccountType
@@ -30,7 +30,7 @@ export type DashboardAccount = {
   createdAt: AccountRow['created_at']
 }
 
-export type DashboardWallet = {
+export type OverviewWallet = {
   id: string
   accountId: string
   name: string
@@ -42,7 +42,7 @@ export type DashboardWallet = {
   createdAt: string
 }
 
-export type DashboardTransaction = {
+export type OverviewTransaction = {
   id: string
   accountId: string
   walletId: string
@@ -59,11 +59,11 @@ export type DashboardTransaction = {
   completedAt: string | null
 }
 
-export type DashboardResponse = {
+export type OverviewResponse = {
   user: BasicUserInfo
-  account: DashboardAccount | null
-  wallets: DashboardWallet[]
-  transactions: DashboardTransaction[]
+  account: OverviewAccount | null
+  wallets: OverviewWallet[]
+  transactions: OverviewTransaction[]
 }
 
 export type TransactionsListItem = {
