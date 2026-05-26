@@ -10,7 +10,7 @@ export default async function TransactionsPage() {
       <DashboardShell
         eyebrow='Wallet operations overview'
         title='Transactions'
-        description='This route will become the dedicated transaction workspace with richer filtering and operational actions.'>
+        description='Audit-ready transaction history with filterable results, pagination, and expandable detail context.'>
         <TransactionsPageClient />
       </DashboardShell>
     </main>
