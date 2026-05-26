@@ -1,19 +1,11 @@
 import { jsonError, toCamelCaseDeep } from '@/lib/api/responses'
 import { findActiveUserById } from '@/lib/auth/demoAuth'
 import { readDemoSessionUserId } from '@/lib/auth/demoSession'
+import { FX_RATES } from '@/lib/payments/fxRates'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import type { FxRate, PaymentsOptionsResponse, PaymentsWallet } from '@/lib/types/api'
+import type { PaymentsOptionsResponse, PaymentsWallet } from '@/lib/types/api'
 
 export const dynamic = 'force-dynamic'
-
-const FX_RATES: FxRate[] = [
-  { fromCurrency: 'EUR', toCurrency: 'CZK', rate: 25.2 },
-  { fromCurrency: 'CZK', toCurrency: 'EUR', rate: 0.0397 },
-  { fromCurrency: 'EUR', toCurrency: 'USD', rate: 1.08 },
-  { fromCurrency: 'USD', toCurrency: 'EUR', rate: 0.926 },
-  { fromCurrency: 'CZK', toCurrency: 'USD', rate: 0.0429 },
-  { fromCurrency: 'USD', toCurrency: 'CZK', rate: 23.3 },
-]
 
 export async function GET() {
   const sessionUserId = await readDemoSessionUserId()

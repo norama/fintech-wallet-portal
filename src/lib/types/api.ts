@@ -133,3 +133,37 @@ export type PaymentsOptionsResponse = {
   wallets: PaymentsWallet[]
   fxRates: FxRate[]
 }
+
+export type PaymentType = 'external_transfer' | 'own_wallet_transfer'
+
+export type PaymentPreviewSource = {
+  walletId: string
+  walletName: string
+  currency: CurrencyCode
+  availableBalanceMinor: number
+  balanceAfterMinor: number
+}
+
+export type PaymentPreviewTarget = {
+  type: 'external_account' | 'own_wallet'
+  name: string | null
+  ref: string
+  currency: CurrencyCode
+}
+
+export type PaymentAmount = {
+  amountMinor: number
+  currency: CurrencyCode
+}
+
+export type PaymentPreviewResponse = {
+  paymentType: PaymentType
+  paymentNote: string | null
+  source: PaymentPreviewSource
+  target: PaymentPreviewTarget
+  sendAmount: PaymentAmount
+  receiveAmount: PaymentAmount
+  exchangeRate: number | null
+  estimatedStatus: 'pending' | 'completed'
+  warnings: string[]
+}

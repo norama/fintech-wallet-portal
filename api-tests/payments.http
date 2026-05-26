@@ -1,0 +1,91 @@
+@baseUrl = http://localhost:3000
+@sessionCookie = 22222222-2222-2222-2222-222222222222
+
+### Payment options
+GET {{baseUrl}}/api/payments/options
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+
+### Preview external transfer
+POST {{baseUrl}}/api/payments/preview
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "paymentType": "external_transfer",
+  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "recipientAccountRef": "DE99••••1234",
+  "recipientName": "Test Supplier Ltd.",
+  "amountMinor": 250000,
+  "paymentNote": "Invoice 2026-0421"
+}
+
+
+### Preview external transfer without recipient name
+POST {{baseUrl}}/api/payments/preview
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "paymentType": "external_transfer",
+  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "recipientAccountRef": "DE99••••1234",
+  "amountMinor": 250000,
+  "paymentNote": "External payment without resolved name"
+}
+
+
+### Preview own wallet transfer EUR to CZK
+POST {{baseUrl}}/api/payments/preview
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "paymentType": "own_wallet_transfer",
+  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "targetWalletId": "44444444-4444-4444-4444-444444444444",
+  "amountMinor": 100000,
+  "paymentNote": "Move funds to CZK operating wallet"
+}
+
+
+### Preview own wallet transfer EUR to USD
+POST {{baseUrl}}/api/payments/preview
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "paymentType": "own_wallet_transfer",
+  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "targetWalletId": "55555555-5555-5555-5555-555555555555",
+  "amountMinor": 100000,
+  "paymentNote": "Move funds to USD vendor wallet"
+}
+
+
+### Error test: amount too high
+POST {{baseUrl}}/api/payments/preview
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "paymentType": "own_wallet_transfer",
+  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "targetWalletId": "44444444-4444-4444-4444-444444444444",
+  "amountMinor": 999999999999,
+  "paymentNote": "Should fail because amount is too high"
+}
+
+
+### Error test: same source and target wallet
+POST {{baseUrl}}/api/payments/preview
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "paymentType": "own_wallet_transfer",
+  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "targetWalletId": "33333333-3333-3333-3333-333333333333",
+  "amountMinor": 100000,
+  "paymentNote": "Should fail because source and target are same"
+}
