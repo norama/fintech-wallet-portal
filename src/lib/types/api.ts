@@ -110,3 +110,24 @@ export type StartSignInResponse = {
 export type VerifyCodeResponse = {
   user: AuthUserResponse
 }
+
+export type PaymentsWallet = {
+  id: string
+  name: string
+  currency: CurrencyCode
+  balanceMinor: number
+  availableBalanceMinor: number
+  reservedBalanceMinor: number
+  status: WalletStatus
+}
+
+export type FxRate = {
+  fromCurrency: CurrencyCode
+  toCurrency: CurrencyCode
+  rate: number
+}
+
+export type PaymentsOptionsResponse = {
+  wallets: PaymentsWallet[]
+  fxRates: FxRate[]
+}
