@@ -55,6 +55,7 @@ export type OverviewTransaction = {
   currency: CurrencyCode
   status: TransactionStatus
   reference: string
+  paymentNote: string | null
   createdAt: string
   completedAt: string | null
 }
@@ -80,6 +81,7 @@ export type TransactionsListItem = {
   currency: CurrencyCode
   status: TransactionStatus
   reference: string
+  paymentNote: string | null
   createdAt: string
   completedAt: string | null
 }

@@ -133,6 +133,13 @@ function TransactionDetailsPanel({ transaction }: { transaction: TransactionsLis
           <CurrencyPill currency={transaction.currency} />
         </TransactionDetailItem>
       </dl>
+      {transaction.paymentNote !== null ? (
+        <dl className='mt-4'>
+          <TransactionDetailItem label='Payment note'>
+            <span className='leading-6'>{transaction.paymentNote}</span>
+          </TransactionDetailItem>
+        </dl>
+      ) : null}
     </div>
   )
 }
@@ -316,6 +323,9 @@ export function TransactionsHistoryView({
                             ) : (
                               <p className='text-sm text-zinc-500'>No counterparty reference</p>
                             )}
+                            {transaction.paymentNote !== null ? (
+                              <p className='text-xs text-zinc-400'>{transaction.paymentNote}</p>
+                            ) : null}
                           </div>
                         </td>
                         <td className='border-y border-violet-200/60 px-3 py-4 align-top'>

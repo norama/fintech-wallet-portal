@@ -68,6 +68,7 @@ export type TransactionRow = {
   currency: CurrencyCode
   status: TransactionStatus
   reference: string
+  payment_note: string | null
   created_at: string
   completed_at: string | null
 }

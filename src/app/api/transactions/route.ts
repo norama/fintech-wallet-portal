@@ -57,6 +57,7 @@ function mapTransactionItem(
     currency: transaction.currency,
     status: transaction.status,
     reference: transaction.reference,
+    paymentNote: transaction.payment_note,
     createdAt: transaction.created_at,
     completedAt: transaction.completed_at,
   }
@@ -130,7 +131,7 @@ export async function GET(request: Request) {
 
       if (searchPattern) {
         transactionsQuery = transactionsQuery.or(
-          `counterparty_name.ilike.${searchPattern},reference.ilike.${searchPattern}`,
+          `counterparty_name.ilike.${searchPattern},reference.ilike.${searchPattern},payment_note.ilike.${searchPattern}`,
         )
       }
     }
