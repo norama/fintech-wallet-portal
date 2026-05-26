@@ -1,5 +1,5 @@
 import { DashboardShell } from '@/features/dashboard/components/DashboardShell'
-import { TransactionsPageClient } from '@/features/transactions/components/TransactionsPageClient'
+import { Transactions } from '@/features/transactions/components/Transactions'
 import { requireDemoSessionUserId } from '@/lib/auth/requireDemoSession'
 
 export default async function TransactionsPage() {
@@ -11,7 +11,7 @@ export default async function TransactionsPage() {
         eyebrow='Wallet operations overview'
         title='Transactions'
         description='Audit-ready transaction history with filterable results, pagination, and expandable detail context.'>
-        <TransactionsPageClient />
+        <Transactions />
       </DashboardShell>
     </main>
   )

@@ -25,6 +25,7 @@ type TransactionsHistoryViewProps = {
   page: number
   onPreviousPage: () => void
   onNextPage: () => void
+  onClearFilters?: (() => void) | undefined
 }
 
 function getCounterpartyReferenceLabel(counterpartyType: CounterpartyType) {
@@ -196,6 +197,7 @@ export function TransactionsHistoryView({
   page,
   onPreviousPage,
   onNextPage,
+  onClearFilters,
 }: TransactionsHistoryViewProps) {
   const [expandedTransactionIdState, setExpandedTransactionId] = useState<string | null>(null)
 
@@ -241,13 +243,24 @@ export function TransactionsHistoryView({
         </div>
       }>
       {!hasItems ? (
-        <div className='rounded-2xl border border-violet-200 bg-white/70 px-5 py-8 text-center'>
+        <div className='rounded-2xl border border-violet-200 bg-white/70 px-5 py-10 text-center'>
           <p className='text-lg font-semibold tracking-tight text-zinc-950'>
-            No transactions match the current filters
+            {onClearFilters
+              ? 'No transactions match the active filters'
+              : 'No transaction history yet'}
           </p>
           <p className='mt-2 text-sm leading-6 text-zinc-600'>
-            Adjust the search or filter selections to broaden the results.
+            {onClearFilters
+              ? 'Adjust the search or filter criteria to widen the result set.'
+              : 'Transactions will appear here once activity is recorded against wallets for this account.'}
           </p>
+          {onClearFilters ? (
+            <div className='mt-6'>
+              <Button variant='secondary' size='sm' onClick={onClearFilters}>
+                Clear all filters
+              </Button>
+            </div>
+          ) : null}
         </div>
       ) : (
         <>
