@@ -1,10 +1,17 @@
 @baseUrl = http://localhost:3000
 @sessionCookie = 22222222-2222-2222-2222-222222222222
 
+###############
+### OPTIONS ###
+###############
+
 ### Payment options
 GET {{baseUrl}}/api/payments/options
 Cookie: fintech_wallet_session={{sessionCookie}}
 
+###############
+### PREVIEW ###
+###############
 
 ### Preview external transfer
 POST {{baseUrl}}/api/payments/preview
@@ -88,4 +95,121 @@ Cookie: fintech_wallet_session={{sessionCookie}}
   "targetWalletId": "33333333-3333-3333-3333-333333333333",
   "amountMinor": 100000,
   "paymentNote": "Should fail because source and target are same"
+}
+
+
+###############
+### SUBMIT ###
+###############
+
+### Submit external transfer - small pending payment
+POST {{baseUrl}}/api/payments/submit
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "paymentType": "external_transfer",
+  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "recipientAccountRef": "DE99••••1234",
+  "recipientName": "Test Supplier Ltd.",
+  "amountMinor": 10000,
+  "paymentNote": "REST test external payment"
+}
+
+
+### Submit external transfer - without recipient name
+POST {{baseUrl}}/api/payments/submit
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "paymentType": "external_transfer",
+  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "recipientAccountRef": "NL22••••8890",
+  "amountMinor": 5000,
+  "paymentNote": "External payment without resolved recipient name"
+}
+
+
+### Submit own wallet transfer - EUR to CZK
+POST {{baseUrl}}/api/payments/submit
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "paymentType": "own_wallet_transfer",
+  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "targetWalletId": "44444444-4444-4444-4444-444444444444",
+  "amountMinor": 10000,
+  "paymentNote": "REST test EUR to CZK own-wallet transfer"
+}
+
+
+### Submit own wallet transfer - EUR to USD
+POST {{baseUrl}}/api/payments/submit
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "paymentType": "own_wallet_transfer",
+  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "targetWalletId": "55555555-5555-5555-5555-555555555555",
+  "amountMinor": 10000,
+  "paymentNote": "REST test EUR to USD own-wallet transfer"
+}
+
+
+### Error: amount too high
+POST {{baseUrl}}/api/payments/submit
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "paymentType": "external_transfer",
+  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "recipientAccountRef": "DE99••••9999",
+  "recipientName": "Too Expensive Ltd.",
+  "amountMinor": 999999999999,
+  "paymentNote": "Should fail because amount exceeds available balance"
+}
+
+
+### Error: own wallet transfer to same wallet
+POST {{baseUrl}}/api/payments/submit
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "paymentType": "own_wallet_transfer",
+  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "targetWalletId": "33333333-3333-3333-3333-333333333333",
+  "amountMinor": 10000,
+  "paymentNote": "Should fail because source and target wallet are same"
+}
+
+
+### Error: missing recipient account ref for external transfer
+POST {{baseUrl}}/api/payments/submit
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "paymentType": "external_transfer",
+  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "recipientName": "Missing Ref Ltd.",
+  "amountMinor": 10000,
+  "paymentNote": "Should fail because recipientAccountRef is missing"
+}
+
+
+### Error: unauthenticated request
+POST {{baseUrl}}/api/payments/submit
+Content-Type: application/json
+
+{
+  "paymentType": "own_wallet_transfer",
+  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "targetWalletId": "44444444-4444-4444-4444-444444444444",
+  "amountMinor": 10000,
+  "paymentNote": "Should fail because no cookie is sent"
 }

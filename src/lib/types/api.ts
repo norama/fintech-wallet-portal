@@ -167,3 +167,21 @@ export type PaymentPreviewResponse = {
   estimatedStatus: 'pending' | 'completed'
   warnings: string[]
 }
+
+export type PaymentSubmitTransactionItem = {
+  id: string
+  walletId: string
+  direction: TransactionDirection
+  transactionType: TransactionType
+  status: TransactionStatus
+  amountMinor: number
+  currency: CurrencyCode
+  paymentNote: string | null
+  reference: string
+}
+
+export type PaymentSubmitResponse = {
+  status: 'pending' | 'completed'
+  reference: string
+  createdTransactions: PaymentSubmitTransactionItem[]
+}
