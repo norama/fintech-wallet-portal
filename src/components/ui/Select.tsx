@@ -7,7 +7,7 @@ type SelectProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, 'className'> & 
 export function Select({ children, ...props }: SelectProps) {
   return (
     <select
-      className='h-11 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-sm text-zinc-950 outline-none transition focus:border-zinc-950'
+      className='[appearance:base-select] w-full cursor-pointer rounded-2xl border border-zinc-300 bg-white py-3 pl-4 pr-5 text-sm text-zinc-950 outline-none transition focus:border-zinc-950'
       {...props}>
       {children}
     </select>
