@@ -1,5 +1,5 @@
 import { Shell } from '@/features/overview/components/Shell'
-import { FeaturePlaceholder } from '@/features/overview/components/FeaturePlaceholder'
+import { NewPayment } from '@/features/payments/components/NewPayment'
 import { requireDemoSessionUserId } from '@/lib/auth/requireDemoSession'
 
 export default async function NewPaymentPage() {
@@ -10,13 +10,8 @@ export default async function NewPaymentPage() {
       <Shell
         eyebrow='Wallet operations overview'
         title='New payment'
-        description='This route will become the initiation flow for outbound payments. It is available now so the dashboard navigation is route-based.'>
-        <FeaturePlaceholder
-          eyebrow='Payments'
-          title='Payment initiation placeholder'
-          description='The route is wired and authenticated, but the transfer form and validation rules will be built in a later implementation step.'
-          nextStep='Build the payment form, beneficiary selection, and review/submit states here when the payments slice starts.'
-        />
+        description='Initiate an external transfer or move funds between your own wallets. Preview before confirming.'>
+        <NewPayment />
       </Shell>
     </main>
   )

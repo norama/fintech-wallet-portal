@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import type { ReactNode } from 'react'
 
 import { Button } from '@/components/ui/Button'
+import { useNavigationGuard } from '@/lib/navigation/NavigationGuardContext'
 import { getSignOutMutationOptions } from '@/lib/query/authQuery'
 
 type ShellProps = {
@@ -37,6 +38,7 @@ function isActiveRoute(pathname: string, href: string) {
 export function Shell({ eyebrow, title, description, children }: ShellProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const { isDirty } = useNavigationGuard()
   const signOutMutation = useMutation({
     ...getSignOutMutationOptions(),
     onSuccess: async () => {
@@ -64,7 +66,7 @@ export function Shell({ eyebrow, title, description, children }: ShellProps) {
               <p className='mt-3 max-w-2xl text-sm leading-6 text-zinc-600'>{description}</p>
             </div>
 
-            <nav className='flex min-h-8 flex-wrap items-start gap-2 lg:min-h-8'>
+            <nav className='flex min-h-8 flex-wrap items-end gap-5 lg:min-h-8'>
               {navigationItems.map((item) => {
                 const isActive = isActiveRoute(pathname, item.href)
 
@@ -72,11 +74,23 @@ export function Shell({ eyebrow, title, description, children }: ShellProps) {
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={(e) => {
+                      if (isDirty) {
+                        e.preventDefault()
+                        if (
+                          window.confirm(
+                            'You have an unfinished payment in progress. Leave this page?',
+                          )
+                        ) {
+                          void router.push(item.href)
+                        }
+                      }
+                    }}
                     className={[
-                      'rounded-full px-4 py-2 text-sm font-medium transition',
+                      'border-b-2 pb-1 text-sm font-medium transition',
                       isActive
-                        ? 'bg-zinc-950 text-white'
-                        : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 hover:text-zinc-950',
+                        ? 'border-zinc-950 text-zinc-950'
+                        : 'border-transparent text-zinc-500 hover:border-zinc-400 hover:text-zinc-800',
                     ].join(' ')}>
                     {item.label}
                   </Link>
