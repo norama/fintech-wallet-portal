@@ -70,6 +70,7 @@ export function NewPayment() {
 
   const externalForm = useForm<ExternalTransferFormValues>({
     resolver: zodResolver(externalTransferFormSchema),
+    mode: 'onTouched',
     defaultValues: {
       sourceWalletId: '',
       amount: undefined as unknown as number,
@@ -81,6 +82,7 @@ export function NewPayment() {
 
   const ownWalletForm = useForm<OwnWalletTransferFormValues>({
     resolver: zodResolver(ownWalletTransferFormSchema),
+    mode: 'onTouched',
     defaultValues: {
       sourceWalletId: '',
       amount: undefined as unknown as number,
@@ -115,6 +117,14 @@ export function NewPayment() {
   }
 
   async function handleExternalPreview(values: ExternalTransferFormValues) {
+    const wallet = wallets.find((w) => w.id === values.sourceWalletId)
+    if (wallet && Math.round(values.amount * 100) > wallet.availableBalanceMinor) {
+      externalForm.setError('amount', {
+        type: 'balance',
+        message: `Exceeds available balance (${formatMoney(wallet.availableBalanceMinor, wallet.currency)})`,
+      })
+      return
+    }
     const input = buildExternalPreviewInput(values)
     const preview = await previewMutation.mutateAsync(input)
     setLastPreviewInput(input)
@@ -124,6 +134,14 @@ export function NewPayment() {
   }
 
   async function handleOwnWalletPreview(values: OwnWalletTransferFormValues) {
+    const wallet = wallets.find((w) => w.id === values.sourceWalletId)
+    if (wallet && Math.round(values.amount * 100) > wallet.availableBalanceMinor) {
+      ownWalletForm.setError('amount', {
+        type: 'balance',
+        message: `Exceeds available balance (${formatMoney(wallet.availableBalanceMinor, wallet.currency)})`,
+      })
+      return
+    }
     const input = buildOwnWalletPreviewInput(values)
     const preview = await previewMutation.mutateAsync(input)
     setLastPreviewInput(input)
@@ -161,6 +179,12 @@ export function NewPayment() {
   const previewError = previewMutation.error?.message ?? null
   const submitError = submitMutation.error?.message ?? null
   const sourceWalletIdForOwn = useWatch({ control: ownWalletForm.control, name: 'sourceWalletId' })
+  const sourceWalletIdForExternal = useWatch({
+    control: externalForm.control,
+    name: 'sourceWalletId',
+  })
+  const externalAmount = useWatch({ control: externalForm.control, name: 'amount' })
+  const ownAmount = useWatch({ control: ownWalletForm.control, name: 'amount' })
 
   const isPaymentInProgress =
     (externalForm.formState.isDirty || ownWalletForm.formState.isDirty || step === 'preview') &&
@@ -183,6 +207,40 @@ export function NewPayment() {
       window.removeEventListener('beforeunload', handleBeforeUnload)
     }
   }, [isPaymentInProgress])
+
+  useEffect(() => {
+    const wallet = wallets.find((w) => w.id === sourceWalletIdForExternal)
+    if (
+      !isNaN(externalAmount) &&
+      externalAmount > 0 &&
+      wallet &&
+      Math.round(externalAmount * 100) > wallet.availableBalanceMinor
+    ) {
+      externalForm.setError('amount', {
+        type: 'balance',
+        message: `Exceeds available balance (${formatMoney(wallet.availableBalanceMinor, wallet.currency)})`,
+      })
+    } else if (externalForm.getFieldState('amount').error?.type === 'balance') {
+      externalForm.clearErrors('amount')
+    }
+  }, [externalAmount, sourceWalletIdForExternal, wallets, externalForm])
+
+  useEffect(() => {
+    const wallet = wallets.find((w) => w.id === sourceWalletIdForOwn)
+    if (
+      !isNaN(ownAmount) &&
+      ownAmount > 0 &&
+      wallet &&
+      Math.round(ownAmount * 100) > wallet.availableBalanceMinor
+    ) {
+      ownWalletForm.setError('amount', {
+        type: 'balance',
+        message: `Exceeds available balance (${formatMoney(wallet.availableBalanceMinor, wallet.currency)})`,
+      })
+    } else if (ownWalletForm.getFieldState('amount').error?.type === 'balance') {
+      ownWalletForm.clearErrors('amount')
+    }
+  }, [ownAmount, sourceWalletIdForOwn, wallets, ownWalletForm])
 
   return (
     <div className='w-full max-w-xl'>
@@ -229,6 +287,7 @@ export function NewPayment() {
             {/* External transfer form */}
             {paymentType === 'external_transfer' ? (
               <form
+                noValidate
                 className='space-y-4'
                 onSubmit={externalForm.handleSubmit(handleExternalPreview)}>
                 <Field
@@ -309,6 +368,7 @@ export function NewPayment() {
             {/* Own wallet transfer form */}
             {paymentType === 'own_wallet_transfer' ? (
               <form
+                noValidate
                 className='space-y-4'
                 onSubmit={ownWalletForm.handleSubmit(handleOwnWalletPreview)}>
                 <Field

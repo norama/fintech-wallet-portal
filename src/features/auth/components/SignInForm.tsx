@@ -29,6 +29,7 @@ export function SignInForm() {
 
   const emailForm = useForm<StartSignInInput>({
     resolver: zodResolver(startSignInSchema),
+    mode: 'onTouched',
     defaultValues: {
       email: '',
     },
@@ -36,6 +37,7 @@ export function SignInForm() {
 
   const codeForm = useForm<VerifyCodeInput>({
     resolver: zodResolver(verifyCodeSchema),
+    mode: 'onTouched',
     defaultValues: {
       challengeId: '',
       code: '',
@@ -106,7 +108,10 @@ export function SignInForm() {
         ) : null}
 
         {step === 'email' ? (
-          <form className='space-y-5' onSubmit={emailForm.handleSubmit(handleStartSignIn)}>
+          <form
+            noValidate
+            className='space-y-5'
+            onSubmit={emailForm.handleSubmit(handleStartSignIn)}>
             <Field
               htmlFor='email'
               label='Email or client email'
@@ -128,7 +133,7 @@ export function SignInForm() {
             </Button>
           </form>
         ) : (
-          <form className='space-y-5' onSubmit={codeForm.handleSubmit(handleVerifyCode)}>
+          <form noValidate className='space-y-5' onSubmit={codeForm.handleSubmit(handleVerifyCode)}>
             <Alert
               tone='info'
               title='Challenge issued'
