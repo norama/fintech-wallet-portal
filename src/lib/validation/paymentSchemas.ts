@@ -17,6 +17,11 @@ const externalTransferSchema = z.object({
   recipientAccountRef: z.string().min(1, 'Recipient account reference is required'),
 })
 
+// Submit variant: external_transfer additionally requires authorizationCode
+const externalTransferSubmitSchema = externalTransferSchema.extend({
+  authorizationCode: z.string().optional(),
+})
+
 const ownWalletTransferSchema = z.object({
   paymentType: z.literal('own_wallet_transfer'),
   sourceWalletId: uuidLikeSchema,
@@ -31,3 +36,10 @@ export const paymentPreviewBodySchema = z.discriminatedUnion('paymentType', [
 ])
 
 export type PaymentPreviewBody = z.infer<typeof paymentPreviewBodySchema>
+
+export const paymentSubmitBodySchema = z.discriminatedUnion('paymentType', [
+  externalTransferSubmitSchema,
+  ownWalletTransferSchema,
+])
+
+export type PaymentSubmitBody = z.infer<typeof paymentSubmitBodySchema>

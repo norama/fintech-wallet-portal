@@ -97,10 +97,70 @@ Cookie: fintech_wallet_session={{sessionCookie}}
   "paymentNote": "Should fail because source and target are same"
 }
 
-
-###############
+##############
 ### SUBMIT ###
-###############
+##############
+
+### Submit external transfer (with authorization code)
+POST {{baseUrl}}/api/payments/submit
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "paymentType": "external_transfer",
+  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "recipientAccountRef": "DE99••••1234",
+  "recipientName": "Test Supplier Ltd.",
+  "amountMinor": 250000,
+  "paymentNote": "Invoice 2026-0421",
+  "authorizationCode": "123456"
+}
+
+
+### Error test: external transfer missing authorization code
+POST {{baseUrl}}/api/payments/submit
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "paymentType": "external_transfer",
+  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "recipientAccountRef": "DE99••••1234",
+  "recipientName": "Test Supplier Ltd.",
+  "amountMinor": 250000,
+  "paymentNote": "Should fail because authorizationCode is missing"
+}
+
+
+### Error test: external transfer wrong authorization code
+POST {{baseUrl}}/api/payments/submit
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "paymentType": "external_transfer",
+  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "recipientAccountRef": "DE99••••1234",
+  "recipientName": "Test Supplier Ltd.",
+  "amountMinor": 250000,
+  "paymentNote": "Should fail because authorizationCode is wrong",
+  "authorizationCode": "000000"
+}
+
+
+### Submit own wallet transfer EUR to CZK (no authorization code required)
+POST {{baseUrl}}/api/payments/submit
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "paymentType": "own_wallet_transfer",
+  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "targetWalletId": "44444444-4444-4444-4444-444444444444",
+  "amountMinor": 100000,
+  "paymentNote": "Move funds to CZK operating wallet"
+}
+
 
 ### Submit external transfer - small pending payment
 POST {{baseUrl}}/api/payments/submit
@@ -113,7 +173,8 @@ Cookie: fintech_wallet_session={{sessionCookie}}
   "recipientAccountRef": "DE99••••1234",
   "recipientName": "Test Supplier Ltd.",
   "amountMinor": 10000,
-  "paymentNote": "REST test external payment"
+  "paymentNote": "REST test external payment",
+  "authorizationCode": "123456"
 }
 
 
@@ -127,7 +188,8 @@ Cookie: fintech_wallet_session={{sessionCookie}}
   "sourceWalletId": "33333333-3333-3333-3333-333333333333",
   "recipientAccountRef": "NL22••••8890",
   "amountMinor": 5000,
-  "paymentNote": "External payment without resolved recipient name"
+  "paymentNote": "External payment without resolved recipient name",
+  "authorizationCode": "123456"
 }
 
 
@@ -170,7 +232,8 @@ Cookie: fintech_wallet_session={{sessionCookie}}
   "recipientAccountRef": "DE99••••9999",
   "recipientName": "Too Expensive Ltd.",
   "amountMinor": 999999999999,
-  "paymentNote": "Should fail because amount exceeds available balance"
+  "paymentNote": "Should fail because amount exceeds available balance",
+  "authorizationCode": "123456"
 }
 
 
@@ -198,7 +261,8 @@ Cookie: fintech_wallet_session={{sessionCookie}}
   "sourceWalletId": "33333333-3333-3333-3333-333333333333",
   "recipientName": "Missing Ref Ltd.",
   "amountMinor": 10000,
-  "paymentNote": "Should fail because recipientAccountRef is missing"
+  "paymentNote": "Should fail because recipientAccountRef is missing",
+  "authorizationCode": "123456"
 }
 
 

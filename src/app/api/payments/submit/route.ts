@@ -6,9 +6,11 @@ import { generateReference } from '@/lib/payments/referenceUtils'
 import type { TransactionRow } from '@/lib/supabase/database.types'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import type { PaymentSubmitResponse, PaymentSubmitTransactionItem } from '@/lib/types/api'
-import { paymentPreviewBodySchema } from '@/lib/validation/paymentSchemas'
+import { paymentSubmitBodySchema } from '@/lib/validation/paymentSchemas'
 
 export const dynamic = 'force-dynamic'
+
+const DEMO_AUTHORIZATION_CODE = '123456'
 
 type InsertedTxRow = Pick<
   TransactionRow,
@@ -54,12 +56,19 @@ export async function POST(request: Request) {
     return jsonError(400, 'INVALID_JSON', 'Request body must be valid JSON')
   }
 
-  const parsed = paymentPreviewBodySchema.safeParse(body)
+  const parsed = paymentSubmitBodySchema.safeParse(body)
   if (!parsed.success) {
     return jsonValidationError(parsed.error)
   }
 
   const input = parsed.data
+
+  if (
+    input.paymentType === 'external_transfer' &&
+    input.authorizationCode !== DEMO_AUTHORIZATION_CODE
+  ) {
+    return jsonError(400, 'INVALID_AUTHORIZATION_CODE', 'The confirmation code is incorrect.')
+  }
 
   try {
     const user = await findActiveUserById(sessionUserId)
