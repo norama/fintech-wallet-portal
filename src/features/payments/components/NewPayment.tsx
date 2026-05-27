@@ -66,6 +66,7 @@ export function NewPayment() {
   const submitMutation = useSubmitPayment()
   const { setIsDirty } = useNavigationGuard()
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- options?.wallets is stable from TanStack Query; ?? [] is a harmless fallback
   const wallets = options?.wallets ?? []
 
   const externalForm = useForm<ExternalTransferFormValues>({
