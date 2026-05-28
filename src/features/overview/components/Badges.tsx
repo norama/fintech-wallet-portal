@@ -18,9 +18,19 @@ function formatLabel(value: string) {
     .join(' ')
 }
 
-export function CurrencyPill({ currency }: { currency: CurrencyCode }) {
+export function CurrencyPill({
+  currency,
+  isPrimary = false,
+}: {
+  currency: CurrencyCode
+  isPrimary?: boolean
+}) {
   return (
-    <span className='inline-flex rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold tracking-[0.12em] text-zinc-600'>
+    <span
+      className={[
+        'inline-flex rounded-full px-3 py-1 text-xs font-semibold tracking-[0.12em]',
+        isPrimary ? 'bg-orange-100 text-orange-700' : 'bg-zinc-100 text-zinc-600',
+      ].join(' ')}>
       {currency}
     </span>
   )

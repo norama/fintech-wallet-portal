@@ -12,6 +12,7 @@ import type {
   WalletsQueryParams,
 } from '@/features/wallets/types'
 import { formatDateTime, formatMaskedReference, formatMoney } from '@/lib/formatters'
+import { NewWalletButton } from './NewWalletButton'
 
 type WalletsViewProps = {
   data?: WalletsListResponse | undefined
@@ -37,7 +38,7 @@ function WalletRow({ wallet }: { wallet: WalletsListItem }) {
           <WalletStatusBadge status={wallet.status} />
         </div>
         <div className='mt-2'>
-          <CurrencyPill currency={wallet.currency} />
+          <CurrencyPill currency={wallet.currency} isPrimary={wallet.isPrimary} />
         </div>
         <div className='mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-sky-100 pt-3'>
           <div>
@@ -76,7 +77,7 @@ function WalletRow({ wallet }: { wallet: WalletsListItem }) {
             {formatMaskedReference(wallet.id)}
           </p>
         </div>
-        <CurrencyPill currency={wallet.currency} />
+        <CurrencyPill currency={wallet.currency} isPrimary={wallet.isPrimary} />
         <div>
           <p className='text-xs text-zinc-400'>Balance</p>
           <p className='text-sm font-semibold text-zinc-950'>
@@ -159,7 +160,8 @@ export function WalletsView({
   const hasActiveFilters =
     Boolean(activeFilters.search) ||
     Boolean(activeFilters.currency) ||
-    Boolean(activeFilters.status)
+    Boolean(activeFilters.status) ||
+    Boolean(activeFilters.isPrimary)
 
   return (
     <div className='space-y-6'>
@@ -187,9 +189,14 @@ export function WalletsView({
                 </div>
               </>
             ) : (
-              <p className='mt-1 text-sm text-zinc-500'>
-                No wallets are associated with this account.
-              </p>
+              <>
+                <p className='mt-1 text-sm text-zinc-500'>
+                  No wallets are associated with this account.
+                </p>
+                <div className='mt-6 flex justify-center'>
+                  <NewWalletButton />
+                </div>
+              </>
             )}
           </div>
         ) : (

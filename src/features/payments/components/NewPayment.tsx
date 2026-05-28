@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/Card'
 import { Field } from '@/components/ui/Field'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
+import { Switch } from '@/components/ui/Switch'
 import type { PaymentStep } from '@/features/payments/components/NewPaymentCards'
 import {
   DoneCard,
@@ -258,22 +259,14 @@ export function NewPayment() {
         {step === 'details' ? (
           <div className='space-y-5'>
             {/* Payment type toggle */}
-            <div className='flex rounded-xl bg-zinc-100 p-1 text-sm font-medium'>
-              {(['external_transfer', 'own_wallet_transfer'] as const).map((type) => (
-                <button
-                  key={type}
-                  type='button'
-                  onClick={() => setPaymentType(type)}
-                  className={[
-                    'flex-1 cursor-pointer rounded-lg px-3 py-2 text-center transition',
-                    paymentType === type
-                      ? 'border border-zinc-300 bg-white text-zinc-900 shadow-sm'
-                      : 'text-zinc-500 hover:text-zinc-700',
-                  ].join(' ')}>
-                  {type === 'external_transfer' ? 'External transfer' : 'Own wallet'}
-                </button>
-              ))}
-            </div>
+            <Switch
+              options={[
+                { value: 'external_transfer', label: 'External transfer' },
+                { value: 'own_wallet_transfer', label: 'Own wallet' },
+              ]}
+              value={paymentType}
+              onChange={(v) => setPaymentType(v as ActivePaymentType)}
+            />
 
             {previewError ? (
               <Alert tone='danger' title='Preview failed' description={previewError} />

@@ -88,6 +88,7 @@ export async function GET(request: Request) {
       .from('wallets')
       .select('*')
       .eq('account_id', accountId)
+      .order('is_primary', { ascending: false })
       .order('created_at', { ascending: false })
 
     if (allWalletsResult.error) {
@@ -112,6 +113,10 @@ export async function GET(request: Request) {
       filteredRows = filteredRows.filter(
         (row): row is WalletRow & { status: WalletStatus } => row.status === parsedQuery.status,
       )
+    }
+
+    if (parsedQuery.isPrimary) {
+      filteredRows = filteredRows.filter((row) => row.is_primary)
     }
 
     const items = toCamelCaseDeep(filteredRows) as WalletsListItem[]
@@ -154,6 +159,19 @@ export async function POST(request: Request) {
 
     const supabase = createSupabaseServerClient()
 
+    // First wallet in this currency for the account becomes primary
+    const existingCountResult = await supabase
+      .from('wallets')
+      .select('id', { count: 'exact', head: true })
+      .eq('account_id', user.account_id)
+      .eq('currency', parsed.data.currency)
+
+    if (existingCountResult.error) {
+      throw new Error(`Failed to check existing wallets: ${existingCountResult.error.message}`)
+    }
+
+    const isPrimary = (existingCountResult.count ?? 0) === 0
+
     const insertResult = await supabase
       .from('wallets')
       .insert({
@@ -164,6 +182,7 @@ export async function POST(request: Request) {
         available_balance_minor: 0,
         reserved_balance_minor: 0,
         status: 'active' as const,
+        is_primary: isPrimary,
       })
       .select('*')
       .single()

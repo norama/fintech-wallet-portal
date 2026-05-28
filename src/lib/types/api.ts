@@ -112,6 +112,7 @@ export type WalletsListItem = {
   availableBalanceMinor: number
   reservedBalanceMinor: number
   status: WalletStatus
+  isPrimary: boolean
   createdAt: string
 }
 

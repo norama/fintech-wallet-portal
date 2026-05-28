@@ -49,11 +49,7 @@ export function TransactionFilters({
   onClearFilters,
 }: TransactionFiltersProps) {
   return (
-    <Card
-      tone='transaction'
-      eyebrow='Transaction filters'
-      title='Filter toolbar'
-      description='These controls sync with the URL and refetch the transactions endpoint through TanStack Query.'>
+    <Card tone='transaction' eyebrow='Transaction filters' title='Filters'>
       <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
         <div className='xl:col-span-3'>
           <Field htmlFor='transactions-search' label='Search'>
@@ -156,7 +152,7 @@ export function TransactionFilters({
           </Select>
         </Field>
 
-        <div className='flex items-end'>
+        <div className='flex items-end justify-end'>
           <Button
             type='button'
             variant='secondary'

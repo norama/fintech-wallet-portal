@@ -52,6 +52,7 @@ export type WalletRow = {
   available_balance_minor: number
   reserved_balance_minor: number
   status: WalletStatus
+  is_primary: boolean
   created_at: string
 }
 

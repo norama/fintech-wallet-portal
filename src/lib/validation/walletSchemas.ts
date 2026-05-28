@@ -9,6 +9,10 @@ export const walletListQuerySchema = z.object({
     .transform((value) => (value && value.length > 0 ? value : undefined)),
   currency: z.enum(['EUR', 'CZK', 'USD', 'GBP']).optional(),
   status: z.enum(['active', 'limited', 'suspended']).optional(),
+  isPrimary: z
+    .union([z.literal('true'), z.literal(true)])
+    .optional()
+    .transform((v) => (v !== undefined ? (true as const) : undefined)),
 })
 
 export type WalletListQuery = z.infer<typeof walletListQuerySchema>

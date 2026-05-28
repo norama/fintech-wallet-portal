@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect } from 'react'
 
@@ -15,6 +14,7 @@ import {
   toWalletsSearchParams,
   type WalletsQueryParams,
 } from '@/features/wallets/types'
+import { NewWalletButton } from './NewWalletButton'
 
 export function Wallets() {
   const pathname = usePathname()
@@ -57,13 +57,7 @@ export function Wallets() {
 
   return (
     <div className='space-y-6'>
-      <div className='flex items-center justify-end'>
-        <Link
-          href='/wallets/new'
-          className='inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800'>
-          New wallet
-        </Link>
-      </div>
+      <NewWalletButton />
 
       <WalletFilters
         activeFilters={activeFilters}

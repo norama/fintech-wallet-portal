@@ -14,6 +14,7 @@ export const walletsQueryKeys = {
       normalized.search ?? '',
       normalized.currency ?? '',
       normalized.status ?? '',
+      normalized.isPrimary ?? false,
     ] as const
   },
 } as const

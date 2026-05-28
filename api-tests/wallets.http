@@ -9,11 +9,14 @@
 GET {{baseUrl}}/api/wallets
 Cookie: fintech_wallet_session={{sessionCookie}}
 
-### List wallets — filter by currency EUR
+# Verify response shape includes isPrimary on each item:
+# { "items": [{ ..., "isPrimary": true|false }, ...], "summary": { ... } }
+
+### List wallets — check isPrimary per currency (expect exactly one isPrimary:true per currency group)
 GET {{baseUrl}}/api/wallets?currency=EUR
 Cookie: fintech_wallet_session={{sessionCookie}}
 
-### List wallets — filter by currency CZK
+### List wallets — check isPrimary per currency (expect exactly one isPrimary:true per currency group)
 GET {{baseUrl}}/api/wallets?currency=CZK
 Cookie: fintech_wallet_session={{sessionCookie}}
 
@@ -58,6 +61,14 @@ Cookie: fintech_wallet_session={{sessionCookie}}
 
 ### List wallets — invalid status (expect 400)
 GET {{baseUrl}}/api/wallets?status=unknown
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+### List wallets — primary wallets only (isPrimary=true)
+GET {{baseUrl}}/api/wallets?isPrimary=true
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+### List wallets — primary wallets only + currency filter
+GET {{baseUrl}}/api/wallets?isPrimary=true&currency=EUR
 Cookie: fintech_wallet_session={{sessionCookie}}
 
 ####################
@@ -160,3 +171,40 @@ Content-Type: application/json
   "name": "Test Wallet",
   "currency": "EUR"
 }
+
+#############################
+### is_primary ASSIGNMENTS ###
+#############################
+
+# Rule: first wallet in a currency for an account → isPrimary: true
+#       subsequent wallets in same currency       → isPrimary: false
+
+### Create first wallet in a new currency (GBP) — expect isPrimary: true in response
+# Run this only if the account has NO existing GBP wallets.
+# Response: { ..., "isPrimary": true }
+POST {{baseUrl}}/api/wallets
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "name": "GBP Primary Wallet",
+  "currency": "GBP"
+}
+
+### Create second wallet in same currency (GBP) — expect isPrimary: false in response
+# Run after the previous request. The account now has a GBP wallet.
+# Response: { ..., "isPrimary": false }
+POST {{baseUrl}}/api/wallets
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "name": "GBP Secondary Wallet",
+  "currency": "GBP"
+}
+
+### Verify the GBP wallet list — expect exactly one isPrimary: true
+# The first wallet (GBP Primary Wallet) should have isPrimary: true,
+# the second (GBP Secondary Wallet) should have isPrimary: false.
+GET {{baseUrl}}/api/wallets?currency=GBP
+Cookie: fintech_wallet_session={{sessionCookie}}

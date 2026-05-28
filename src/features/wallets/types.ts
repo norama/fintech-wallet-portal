@@ -18,6 +18,7 @@ export type WalletsQueryParams = {
   search?: string | undefined
   currency?: CurrencyCode | undefined
   status?: WalletStatus | undefined
+  isPrimary?: boolean | undefined
 }
 
 export type WalletCreateInput = {
@@ -59,6 +60,10 @@ export function toWalletsSearchParams(params: WalletsQueryParams = {}) {
 
   if (normalized.status) {
     searchParams.set('status', normalized.status)
+  }
+
+  if (normalized.isPrimary) {
+    searchParams.set('isPrimary', 'true')
   }
 
   return searchParams
