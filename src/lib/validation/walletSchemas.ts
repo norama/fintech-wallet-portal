@@ -12,3 +12,14 @@ export const walletListQuerySchema = z.object({
 })
 
 export type WalletListQuery = z.infer<typeof walletListQuerySchema>
+
+export const walletCreateBodySchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: 'Wallet name is required' })
+    .max(80, { error: 'Name must be 80 characters or fewer' }),
+  currency: z.enum(['EUR', 'CZK', 'USD', 'GBP'], { error: 'Please select a currency' }),
+})
+
+export type WalletCreateBody = z.infer<typeof walletCreateBodySchema>

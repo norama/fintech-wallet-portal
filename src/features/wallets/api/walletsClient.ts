@@ -1,5 +1,10 @@
-import type { WalletsListResponse, WalletsQueryParams } from '@/features/wallets/types'
+import type {
+  WalletCreateInput,
+  WalletsListResponse,
+  WalletsQueryParams,
+} from '@/features/wallets/types'
 import { normalizeWalletsQueryParams, toWalletsSearchParams } from '@/features/wallets/types'
+import type { WalletsListItem } from '@/lib/types/api'
 
 type WalletsApiErrorResponse = {
   error?: {
@@ -55,4 +60,34 @@ export async function fetchWallets(params: WalletsQueryParams = {}) {
   }
 
   return body as WalletsListResponse
+}
+
+export async function createWallet(input: WalletCreateInput): Promise<WalletsListItem> {
+  const response = await fetch('/api/wallets', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(input),
+    cache: 'no-store',
+  })
+
+  const body = (await response.json().catch(() => null)) as
+    | WalletsListItem
+    | WalletsApiErrorResponse
+    | null
+
+  if (!response.ok) {
+    const code =
+      body && typeof body === 'object' && 'error' in body && body.error?.code
+        ? body.error.code
+        : null
+    const message =
+      body && typeof body === 'object' && 'error' in body && body.error?.message
+        ? body.error.message
+        : 'Unable to create wallet'
+
+    throw new WalletsRequestError(message, response.status, code)
+  }
+
+  return body as WalletsListItem
 }

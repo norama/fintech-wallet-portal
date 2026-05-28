@@ -4,7 +4,11 @@ import { readDemoSessionUserId } from '@/lib/auth/demoSession'
 import type { CurrencyCode, WalletRow, WalletStatus } from '@/lib/supabase/database.types'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import type { WalletsListItem, WalletsListResponse, WalletsSummary } from '@/lib/types/api'
-import { walletListQuerySchema, type WalletListQuery } from '@/lib/validation/walletSchemas'
+import {
+  walletCreateBodySchema,
+  walletListQuerySchema,
+  type WalletListQuery,
+} from '@/lib/validation/walletSchemas'
 
 export const dynamic = 'force-dynamic'
 
@@ -119,5 +123,61 @@ export async function GET(request: Request) {
     console.error('[GET /api/wallets]', error)
 
     return jsonError(500, 'INTERNAL_ERROR', 'Unable to load wallets.')
+  }
+}
+
+export async function POST(request: Request) {
+  const sessionUserId = await readDemoSessionUserId()
+
+  if (!sessionUserId) {
+    return getUnauthenticatedResponse()
+  }
+
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch {
+    return jsonError(400, 'INVALID_JSON', 'Request body must be valid JSON')
+  }
+
+  const parsed = walletCreateBodySchema.safeParse(body)
+  if (!parsed.success) {
+    return jsonValidationError(parsed.error)
+  }
+
+  try {
+    const user = await findActiveUserById(sessionUserId)
+
+    if (!user) {
+      return getUnauthenticatedResponse()
+    }
+
+    const supabase = createSupabaseServerClient()
+
+    const insertResult = await supabase
+      .from('wallets')
+      .insert({
+        account_id: user.account_id,
+        name: parsed.data.name,
+        currency: parsed.data.currency,
+        balance_minor: 0,
+        available_balance_minor: 0,
+        reserved_balance_minor: 0,
+        status: 'active' as const,
+      })
+      .select('*')
+      .single()
+
+    if (insertResult.error) {
+      throw new Error(`Failed to create wallet: ${insertResult.error.message}`)
+    }
+
+    const wallet = toCamelCaseDeep(insertResult.data) as WalletsListItem
+
+    return Response.json(wallet, { status: 201 })
+  } catch (error) {
+    console.error('[POST /api/wallets]', error)
+
+    return jsonError(500, 'INTERNAL_ERROR', 'Unable to create wallet.')
   }
 }

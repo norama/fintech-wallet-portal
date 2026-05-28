@@ -77,11 +77,7 @@ export function Shell({ eyebrow, title, description, children }: ShellProps) {
                     onClick={(e) => {
                       if (isDirty) {
                         e.preventDefault()
-                        if (
-                          window.confirm(
-                            'You have an unfinished payment in progress. Leave this page?',
-                          )
-                        ) {
+                        if (window.confirm('You have unsaved changes. Leave this page?')) {
                           void router.push(item.href)
                         }
                       }

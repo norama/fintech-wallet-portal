@@ -1,5 +1,7 @@
 'use client'
 
+import Link from 'next/link'
+
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -57,10 +59,17 @@ function WalletRow({ wallet }: { wallet: WalletsListItem }) {
             </p>
           </div>
         </div>
+        <div className='mt-3 border-t border-sky-100 pt-3'>
+          <Link
+            href={`/transactions?walletId=${wallet.id}`}
+            className='text-sm font-medium text-sky-700 transition hover:text-sky-900'>
+            View transactions
+          </Link>
+        </div>
       </div>
 
       {/* Desktop layout */}
-      <div className='hidden sm:grid sm:grid-cols-[minmax(0,1.5fr)_auto_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto_auto] sm:items-center sm:gap-x-5'>
+      <div className='hidden sm:grid sm:grid-cols-[minmax(0,1.5fr)_auto_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto_auto_auto] sm:items-center sm:gap-x-5'>
         <div className='min-w-0'>
           <p className='truncate font-medium text-zinc-950'>{wallet.name}</p>
           <p className='mt-0.5 font-mono text-xs text-zinc-400'>
@@ -91,6 +100,11 @@ function WalletRow({ wallet }: { wallet: WalletsListItem }) {
           <p className='text-xs text-zinc-400'>Created</p>
           <p className='text-sm text-zinc-700'>{formatDateTime(wallet.createdAt)}</p>
         </div>
+        <Link
+          href={`/transactions?walletId=${wallet.id}`}
+          className='text-sm font-medium text-sky-700 transition hover:text-sky-900'>
+          View transactions
+        </Link>
       </div>
     </div>
   )

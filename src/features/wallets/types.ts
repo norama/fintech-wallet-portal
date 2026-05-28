@@ -20,6 +20,11 @@ export type WalletsQueryParams = {
   status?: WalletStatus | undefined
 }
 
+export type WalletCreateInput = {
+  name: string
+  currency: CurrencyCode
+}
+
 export type NormalizedWalletsQueryParams = WalletListQuery
 
 export function normalizeWalletsQueryParams(

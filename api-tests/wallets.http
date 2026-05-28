@@ -59,3 +59,104 @@ Cookie: fintech_wallet_session={{sessionCookie}}
 ### List wallets — invalid status (expect 400)
 GET {{baseUrl}}/api/wallets?status=unknown
 Cookie: fintech_wallet_session={{sessionCookie}}
+
+####################
+### CREATE WALLET ###
+####################
+
+### Create wallet — valid EUR wallet
+POST {{baseUrl}}/api/wallets
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "name": "EUR Operating Account",
+  "currency": "EUR"
+}
+
+### Create wallet — valid CZK wallet
+POST {{baseUrl}}/api/wallets
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "name": "CZK Payroll Account",
+  "currency": "CZK"
+}
+
+### Create wallet — valid USD wallet
+POST {{baseUrl}}/api/wallets
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "name": "USD Reserve",
+  "currency": "USD"
+}
+
+### Create wallet — valid GBP wallet
+POST {{baseUrl}}/api/wallets
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "name": "GBP Settlement",
+  "currency": "GBP"
+}
+
+### Create wallet — missing name (expect 400)
+POST {{baseUrl}}/api/wallets
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "currency": "EUR"
+}
+
+### Create wallet — empty name (expect 400)
+POST {{baseUrl}}/api/wallets
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "name": "",
+  "currency": "EUR"
+}
+
+### Create wallet — name too long — 81 characters (expect 400)
+POST {{baseUrl}}/api/wallets
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "name": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  "currency": "EUR"
+}
+
+### Create wallet — invalid currency (expect 400)
+POST {{baseUrl}}/api/wallets
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "name": "Test Wallet",
+  "currency": "XYZ"
+}
+
+### Create wallet — missing currency (expect 400)
+POST {{baseUrl}}/api/wallets
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "name": "Test Wallet"
+}
+
+### Create wallet — unauthenticated (expect 401)
+POST {{baseUrl}}/api/wallets
+Content-Type: application/json
+
+{
+  "name": "Test Wallet",
+  "currency": "EUR"
+}
