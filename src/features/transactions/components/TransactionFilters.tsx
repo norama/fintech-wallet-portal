@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Field } from '@/components/ui/Field'
-import { Input } from '@/components/ui/Input'
+import { SearchInput } from '@/components/ui/SearchInput'
 import { Select } from '@/components/ui/Select'
 import {
   DEFAULT_TRANSACTIONS_PAGE_SIZE,
@@ -36,6 +36,7 @@ function parseTransactionTypeValue(value: string): TransactionsQueryParams['tran
 type TransactionFiltersProps = {
   activeFilters: TransactionsQueryParams
   wallets: TransactionsFilterWallet[]
+  hasActiveFilters: boolean
   onUpdateFilters: (partial: TransactionsQueryParams, options?: { resetPage?: boolean }) => void
   onClearFilters: () => void
 }
@@ -43,6 +44,7 @@ type TransactionFiltersProps = {
 export function TransactionFilters({
   activeFilters,
   wallets,
+  hasActiveFilters,
   onUpdateFilters,
   onClearFilters,
 }: TransactionFiltersProps) {
@@ -55,11 +57,14 @@ export function TransactionFilters({
       <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
         <div className='xl:col-span-3'>
           <Field htmlFor='transactions-search' label='Search'>
-            <Input
+            <SearchInput
               id='transactions-search'
               value={activeFilters.search ?? ''}
               onChange={(event) => {
                 onUpdateFilters({ search: event.target.value || undefined }, { resetPage: true })
+              }}
+              onClear={() => {
+                onUpdateFilters({ search: undefined }, { resetPage: true })
               }}
               placeholder='Search counterparty or reference'
             />
@@ -152,7 +157,11 @@ export function TransactionFilters({
         </Field>
 
         <div className='flex items-end'>
-          <Button type='button' variant='secondary' onClick={onClearFilters}>
+          <Button
+            type='button'
+            variant='secondary'
+            disabled={!hasActiveFilters}
+            onClick={onClearFilters}>
             Clear filters
           </Button>
         </div>

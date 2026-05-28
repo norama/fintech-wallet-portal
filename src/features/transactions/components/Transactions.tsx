@@ -75,6 +75,7 @@ export function Transactions() {
       <TransactionFilters
         activeFilters={activeFilters}
         wallets={wallets}
+        hasActiveFilters={hasActiveFilters}
         onUpdateFilters={updateFilters}
         onClearFilters={clearFilters}
       />

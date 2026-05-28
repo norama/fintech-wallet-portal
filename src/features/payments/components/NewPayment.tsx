@@ -187,9 +187,11 @@ export function NewPayment() {
   const externalAmount = useWatch({ control: externalForm.control, name: 'amount' })
   const ownAmount = useWatch({ control: ownWalletForm.control, name: 'amount' })
 
+  const externalFormTouched = Object.keys(externalForm.formState.touchedFields).length > 0
+  const ownWalletFormTouched = Object.keys(ownWalletForm.formState.touchedFields).length > 0
+
   const isPaymentInProgress =
-    (externalForm.formState.isDirty || ownWalletForm.formState.isDirty || step === 'preview') &&
-    step !== 'done'
+    (externalFormTouched || ownWalletFormTouched || step === 'preview') && step !== 'done'
 
   useEffect(() => {
     setIsDirty(isPaymentInProgress)

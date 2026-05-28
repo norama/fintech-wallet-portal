@@ -12,9 +12,9 @@ import {
   TransactionStatusBadge,
   TransactionTypeBadge,
   UserRoleBadge,
-  WalletStatusBadge,
 } from '@/features/overview/components/Badges'
 import { formatDateTime, formatMaskedReference, formatMoney } from '@/lib/formatters'
+import type { CurrencyCode } from '@/lib/supabase/database.types'
 import type { OverviewResponse } from '@/lib/types/api'
 
 type AlertItem = {
@@ -127,41 +127,28 @@ export function ActivitySummaryCard({
   )
 }
 
-export function WalletCard({ wallet }: { wallet: OverviewResponse['wallets'][number] }) {
+export function WalletFundsCard({
+  eyebrow,
+  title,
+  byCurrency,
+}: {
+  eyebrow: string
+  title: string
+  byCurrency: Partial<Record<CurrencyCode, number>>
+}) {
+  const entries = Object.entries(byCurrency) as [CurrencyCode, number][]
+
   return (
-    <Card
-      tone='wallet'
-      eyebrow='Wallet balance'
-      title={wallet.name}
-      description={`Updated ${formatDateTime(wallet.createdAt)}`}>
-      <div className='flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between'>
-        <div className='min-w-0'>
-          <p className='text-2xl font-semibold tracking-tight text-zinc-950 2xl:text-3xl'>
-            {formatMoney(wallet.balanceMinor, wallet.currency)}
-          </p>
-          <p className='mt-1 text-sm text-zinc-600'>
-            Available {formatMoney(wallet.availableBalanceMinor, wallet.currency)}
-          </p>
-        </div>
-        <div className='xl:shrink-0'>
-          <CurrencyPill currency={wallet.currency} />
-        </div>
-      </div>
-      <div className='flex flex-wrap gap-2'>
-        <WalletStatusBadge status={wallet.status} />
-      </div>
-      <dl className='grid gap-3 text-sm sm:grid-cols-2'>
-        <div className='min-w-0'>
-          <dt className='text-zinc-500'>Reserved</dt>
-          <dd className='mt-1 font-medium text-zinc-900'>
-            {formatMoney(wallet.reservedBalanceMinor, wallet.currency)}
-          </dd>
-        </div>
-        <div className='min-w-0'>
-          <dt className='text-zinc-500'>Wallet reference</dt>
-          <dd className='mt-1 font-medium text-zinc-900'>{formatMaskedReference(wallet.id)}</dd>
-        </div>
-      </dl>
+    <Card tone='wallet' padding='md' eyebrow={eyebrow} title={title}>
+      {entries.length > 0 ? (
+        <dl className='space-y-2'>
+          {entries.map(([currency, amount]) => (
+            <SummaryRow key={currency} label={currency} value={formatMoney(amount, currency)} />
+          ))}
+        </dl>
+      ) : (
+        <p className='text-sm text-zinc-400'>No data</p>
+      )}
     </Card>
   )
 }

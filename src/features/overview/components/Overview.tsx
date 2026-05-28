@@ -14,9 +14,10 @@ import {
   ActivitySummaryCard,
   AlertsCard,
   TransactionItem,
-  WalletCard,
+  WalletFundsCard,
 } from '@/features/overview/components/OverviewCards'
 import { getOverviewQueryOptions } from '@/lib/query/overviewQuery'
+import type { CurrencyCode } from '@/lib/supabase/database.types'
 import type { OverviewResponse } from '@/lib/types/api'
 
 function buildActivityAlerts(data: OverviewResponse) {
@@ -72,6 +73,20 @@ function buildActivityAlerts(data: OverviewResponse) {
   return alerts.slice(0, 3)
 }
 
+function aggregateWalletFunds(wallets: OverviewResponse['wallets']) {
+  const balance: Partial<Record<CurrencyCode, number>> = {}
+  const available: Partial<Record<CurrencyCode, number>> = {}
+  const reserved: Partial<Record<CurrencyCode, number>> = {}
+
+  for (const wallet of wallets) {
+    balance[wallet.currency] = (balance[wallet.currency] ?? 0) + wallet.balanceMinor
+    available[wallet.currency] = (available[wallet.currency] ?? 0) + wallet.availableBalanceMinor
+    reserved[wallet.currency] = (reserved[wallet.currency] ?? 0) + wallet.reservedBalanceMinor
+  }
+
+  return { balance, available, reserved }
+}
+
 export function Overview() {
   const router = useRouter()
   const overviewQuery = useQuery(getOverviewQueryOptions())
@@ -114,18 +129,15 @@ export function Overview() {
             ))}
           </section>
 
-          <section className='grid gap-6 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3'>
+          <section className='grid gap-6 sm:grid-cols-3'>
             {Array.from({ length: 3 }).map((_, index) => (
               <SkeletonCard
                 key={index}
                 tone='wallet'
-                eyebrow='Wallet balance'
-                title='Loading wallet'
-                lines={[
-                  { widthClassName: 'w-24' },
-                  { widthClassName: 'w-40', heightClassName: 'h-8' },
-                  { widthClassName: 'w-28' },
-                ]}
+                eyebrow='Loading…'
+                title='Wallet funds'
+                padding='md'
+                lines={[{ widthClassName: 'w-20' }, { widthClassName: 'w-28' }]}
               />
             ))}
           </section>
@@ -158,13 +170,13 @@ export function Overview() {
       {overview ? (
         <div className='space-y-6'>
           <section className='flex flex-col gap-6 lg:flex-row lg:flex-wrap'>
-            <div className='lg:min-w-[18rem] lg:flex-1'>
+            <div className='lg:min-w-[18rem] lg:flex-1 lg:[&>section]:h-full'>
               <AccountStatusCard account={overview.account} user={overview.user} />
             </div>
-            <div className='lg:min-w-[18rem] lg:flex-1'>
+            <div className='lg:min-w-[18rem] lg:flex-1 lg:[&>section]:h-full'>
               <AlertsCard alerts={activityAlerts} />
             </div>
-            <div className='lg:min-w-[18rem] lg:flex-1'>
+            <div className='lg:min-w-[18rem] lg:flex-1 lg:[&>section]:h-full'>
               <ActivitySummaryCard
                 wallets={overview.wallets}
                 transactions={overview.transactions}
@@ -172,11 +184,32 @@ export function Overview() {
             </div>
           </section>
 
-          <section className='grid gap-6 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3'>
+          <section className='grid gap-6 sm:grid-cols-3'>
             {overview.wallets.length > 0 ? (
-              overview.wallets.map((wallet) => <WalletCard key={wallet.id} wallet={wallet} />)
+              (() => {
+                const funds = aggregateWalletFunds(overview.wallets)
+                return (
+                  <>
+                    <WalletFundsCard
+                      eyebrow='Total balance'
+                      title='Balance'
+                      byCurrency={funds.balance}
+                    />
+                    <WalletFundsCard
+                      eyebrow='Available funds'
+                      title='Available'
+                      byCurrency={funds.available}
+                    />
+                    <WalletFundsCard
+                      eyebrow='Reserved funds'
+                      title='Reserved'
+                      byCurrency={funds.reserved}
+                    />
+                  </>
+                )
+              })()
             ) : (
-              <div className='md:col-span-2 xl:col-span-2 2xl:col-span-3'>
+              <div className='sm:col-span-3'>
                 <Card
                   tone='wallet'
                   eyebrow='Wallet balance'

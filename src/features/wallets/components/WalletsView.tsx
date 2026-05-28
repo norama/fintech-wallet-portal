@@ -2,16 +2,14 @@
 
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton'
+import { Skeleton } from '@/components/ui/Skeleton'
 import { CurrencyPill, WalletStatusBadge } from '@/features/overview/components/Badges'
 import type {
   WalletsListItem,
   WalletsListResponse,
   WalletsQueryParams,
-  WalletsSummary,
 } from '@/features/wallets/types'
 import { formatDateTime, formatMaskedReference, formatMoney } from '@/lib/formatters'
-import type { CurrencyCode } from '@/lib/supabase/database.types'
 
 type WalletsViewProps = {
   data?: WalletsListResponse | undefined
@@ -22,97 +20,54 @@ type WalletsViewProps = {
   activeFilters: WalletsQueryParams
 }
 
-function SummaryItem({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className='flex items-center justify-between gap-3'>
-      <dt className='text-sm text-zinc-500'>{label}</dt>
-      <dd className='text-sm font-semibold text-zinc-950'>{value}</dd>
-    </div>
-  )
-}
-
-function WalletSummaryCards({ summary }: { summary: WalletsSummary }) {
-  const reservedEntries = Object.entries(summary.totalReservedByCurrency) as [
-    CurrencyCode,
-    number,
-  ][]
-
-  return (
-    <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
-      <Card tone='wallet' padding='md' eyebrow='All wallets' title={String(summary.totalWallets)}>
-        <dl className='space-y-2'>
-          <SummaryItem label='Active' value={summary.activeWallets} />
-          <SummaryItem label='Limited' value={summary.limitedWallets} />
-          <SummaryItem label='Suspended' value={summary.suspendedWallets} />
-        </dl>
-      </Card>
-
-      <Card
-        tone='wallet'
-        padding='md'
-        eyebrow='Active wallets'
-        title={String(summary.activeWallets)}>
-        <dl className='space-y-2'>
-          <SummaryItem
-            label='Operational'
-            value={`${Math.round((summary.activeWallets / Math.max(summary.totalWallets, 1)) * 100)}%`}
-          />
-          <SummaryItem label='Limited' value={summary.limitedWallets} />
-          <SummaryItem label='Suspended' value={summary.suspendedWallets} />
-        </dl>
-      </Card>
-
-      <Card
-        tone='wallet'
-        padding='md'
-        eyebrow='Currencies'
-        title={String(summary.currencies.length)}>
-        <div className='flex flex-wrap gap-2'>
-          {summary.currencies.length > 0 ? (
-            summary.currencies.map((currency) => (
-              <CurrencyPill key={currency} currency={currency} />
-            ))
-          ) : (
-            <p className='text-sm text-zinc-400'>No currencies</p>
-          )}
-        </div>
-      </Card>
-
-      <Card tone='wallet' padding='md' eyebrow='Reserved funds'>
-        {reservedEntries.length > 0 ? (
-          <dl className='space-y-2'>
-            {reservedEntries.map(([currency, amount]) => (
-              <SummaryItem key={currency} label={currency} value={formatMoney(amount, currency)} />
-            ))}
-          </dl>
-        ) : (
-          <p className='text-sm text-zinc-400'>No reserved funds</p>
-        )}
-      </Card>
-    </div>
-  )
-}
-
 function WalletRow({ wallet }: { wallet: WalletsListItem }) {
   return (
-    <div className='grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 rounded-2xl border border-sky-200/60 bg-white/70 px-5 py-4 sm:grid-cols-[1.5fr_1fr_1fr_1fr_auto_auto] sm:items-center sm:gap-4'>
-      <div className='min-w-0 sm:col-span-1'>
-        <p className='truncate font-medium text-zinc-950'>{wallet.name}</p>
-        <p className='mt-0.5 font-mono text-xs text-zinc-400'>{formatMaskedReference(wallet.id)}</p>
-      </div>
-
-      <div className='flex items-start justify-end gap-2 sm:contents'>
-        <div className='hidden sm:block'>
+    <div className='rounded-2xl border border-sky-200/60 bg-white/70 px-5 py-4'>
+      {/* Mobile layout */}
+      <div className='sm:hidden'>
+        <div className='flex items-start justify-between gap-3'>
+          <div className='min-w-0'>
+            <p className='truncate font-medium text-zinc-950'>{wallet.name}</p>
+            <p className='mt-0.5 font-mono text-xs text-zinc-400'>
+              {formatMaskedReference(wallet.id)}
+            </p>
+          </div>
+          <WalletStatusBadge status={wallet.status} />
+        </div>
+        <div className='mt-2'>
           <CurrencyPill currency={wallet.currency} />
         </div>
-        <WalletStatusBadge status={wallet.status} />
+        <div className='mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-sky-100 pt-3'>
+          <div>
+            <p className='text-xs text-zinc-400'>Balance</p>
+            <p className='text-sm font-semibold text-zinc-950'>
+              {formatMoney(wallet.balanceMinor, wallet.currency)}
+            </p>
+          </div>
+          <div>
+            <p className='text-xs text-zinc-400'>Available</p>
+            <p className='text-sm font-semibold text-emerald-700'>
+              {formatMoney(wallet.availableBalanceMinor, wallet.currency)}
+            </p>
+          </div>
+          <div>
+            <p className='text-xs text-zinc-400'>Reserved</p>
+            <p className='text-sm font-semibold text-zinc-700'>
+              {formatMoney(wallet.reservedBalanceMinor, wallet.currency)}
+            </p>
+          </div>
+        </div>
       </div>
 
-      <div className='sm:hidden'>
+      {/* Desktop layout */}
+      <div className='hidden sm:grid sm:grid-cols-[minmax(0,1.5fr)_auto_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto_auto] sm:items-center sm:gap-x-5'>
+        <div className='min-w-0'>
+          <p className='truncate font-medium text-zinc-950'>{wallet.name}</p>
+          <p className='mt-0.5 font-mono text-xs text-zinc-400'>
+            {formatMaskedReference(wallet.id)}
+          </p>
+        </div>
         <CurrencyPill currency={wallet.currency} />
-      </div>
-
-      <div className='col-span-2 grid grid-cols-3 gap-3 border-t border-sky-100 pt-3 sm:col-span-1 sm:border-0 sm:pt-0'>
         <div>
           <p className='text-xs text-zinc-400'>Balance</p>
           <p className='text-sm font-semibold text-zinc-950'>
@@ -131,11 +86,11 @@ function WalletRow({ wallet }: { wallet: WalletsListItem }) {
             {formatMoney(wallet.reservedBalanceMinor, wallet.currency)}
           </p>
         </div>
-      </div>
-
-      <div className='hidden sm:block'>
-        <p className='text-xs text-zinc-400'>Created</p>
-        <p className='text-sm text-zinc-700'>{formatDateTime(wallet.createdAt)}</p>
+        <WalletStatusBadge status={wallet.status} />
+        <div>
+          <p className='text-xs text-zinc-400'>Created</p>
+          <p className='text-sm text-zinc-700'>{formatDateTime(wallet.createdAt)}</p>
+        </div>
       </div>
     </div>
   )
@@ -144,22 +99,6 @@ function WalletRow({ wallet }: { wallet: WalletsListItem }) {
 function WalletsListSkeleton() {
   return (
     <div className='space-y-6'>
-      <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
-        {Array.from({ length: 4 }).map((_, index) => (
-          <SkeletonCard
-            key={index}
-            tone='wallet'
-            padding='md'
-            eyebrow='Loading…'
-            lines={[
-              { widthClassName: 'w-16', heightClassName: 'h-7' },
-              { widthClassName: 'w-full' },
-              { widthClassName: 'w-3/4' },
-            ]}
-          />
-        ))}
-      </div>
-
       <Card tone='wallet' padding='md'>
         <div className='space-y-3'>
           {Array.from({ length: 5 }).map((_, index) => (
@@ -210,8 +149,6 @@ export function WalletsView({
 
   return (
     <div className='space-y-6'>
-      <WalletSummaryCards summary={data.summary} />
-
       <Card
         tone='wallet'
         eyebrow='Wallet inventory'

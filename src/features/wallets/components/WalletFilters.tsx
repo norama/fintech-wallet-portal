@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Field } from '@/components/ui/Field'
-import { Input } from '@/components/ui/Input'
+import { SearchInput } from '@/components/ui/SearchInput'
 import { Select } from '@/components/ui/Select'
 import {
   WALLET_CURRENCY_OPTIONS,
@@ -51,11 +51,14 @@ export function WalletFilters({
       <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
         <div className='sm:col-span-2 lg:col-span-3'>
           <Field htmlFor='wallets-search' label='Search'>
-            <Input
+            <SearchInput
               id='wallets-search'
               value={activeFilters.search ?? ''}
               onChange={(event) => {
                 onUpdateFilters({ search: event.target.value || undefined })
+              }}
+              onClear={() => {
+                onUpdateFilters({ search: undefined })
               }}
               placeholder='Search wallet name'
             />
