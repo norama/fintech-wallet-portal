@@ -104,6 +104,31 @@ export type TransactionsListResponse = {
   }
 }
 
+export type WalletsListItem = {
+  id: string
+  name: string
+  currency: CurrencyCode
+  balanceMinor: number
+  availableBalanceMinor: number
+  reservedBalanceMinor: number
+  status: WalletStatus
+  createdAt: string
+}
+
+export type WalletsSummary = {
+  totalWallets: number
+  activeWallets: number
+  limitedWallets: number
+  suspendedWallets: number
+  currencies: CurrencyCode[]
+  totalReservedByCurrency: Partial<Record<CurrencyCode, number>>
+}
+
+export type WalletsListResponse = {
+  items: WalletsListItem[]
+  summary: WalletsSummary
+}
+
 export type StartSignInResponse = {
   challengeId: string
   user: AuthUserResponse

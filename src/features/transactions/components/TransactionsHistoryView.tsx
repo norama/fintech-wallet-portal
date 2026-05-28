@@ -253,7 +253,7 @@ export function TransactionsHistoryView({
         <div className='rounded-2xl border border-violet-200 bg-white/70 px-5 py-10 text-center'>
           <p className='text-lg font-semibold tracking-tight text-zinc-950'>
             {onClearFilters
-              ? 'No transactions match the active filters'
+              ? 'No transactions match the current filters'
               : 'No transaction history yet'}
           </p>
           <p className='mt-2 text-sm leading-6 text-zinc-600'>

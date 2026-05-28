@@ -137,7 +137,7 @@ export function SignInForm() {
             <Alert
               tone='info'
               title='Challenge issued'
-              description={`Verification started for ${userLabel ?? 'demo user'}. Use code 123456 to continue.`}
+              description={`Verification started for ${userLabel ?? 'demo user'}. Use demo code to continue.`}
             />
 
             <Field

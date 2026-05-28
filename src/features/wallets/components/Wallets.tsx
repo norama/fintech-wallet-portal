@@ -1,0 +1,97 @@
+'use client'
+
+import Link from 'next/link'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useEffect } from 'react'
+
+import { Alert } from '@/components/ui/Alert'
+import { Button } from '@/components/ui/Button'
+import { WalletsRequestError } from '@/features/wallets/api/walletsClient'
+import { WalletFilters } from '@/features/wallets/components/WalletFilters'
+import { WalletsView } from '@/features/wallets/components/WalletsView'
+import { useWallets } from '@/features/wallets/hooks/useWallets'
+import {
+  parseWalletsSearchParams,
+  toWalletsSearchParams,
+  type WalletsQueryParams,
+} from '@/features/wallets/types'
+
+export function Wallets() {
+  const pathname = usePathname()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const activeFilters = parseWalletsSearchParams(new URLSearchParams(searchParams.toString()))
+  const walletsQuery = useWallets(activeFilters)
+
+  useEffect(() => {
+    if (walletsQuery.error instanceof WalletsRequestError && walletsQuery.error.status === 401) {
+      router.replace('/sign-in')
+    }
+  }, [walletsQuery.error, router])
+
+  const requestError = walletsQuery.error instanceof WalletsRequestError ? walletsQuery.error : null
+  const isUnauthorized = requestError?.status === 401
+  const errorMessage = !isUnauthorized && requestError ? requestError.message : null
+
+  function replaceSearchParams(nextParams: WalletsQueryParams) {
+    const nextSearchParams = toWalletsSearchParams(nextParams)
+    const queryString = nextSearchParams.toString()
+
+    router.replace(queryString.length > 0 ? `${pathname}?${queryString}` : pathname, {
+      scroll: false,
+    })
+  }
+
+  function updateFilters(nextPartial: WalletsQueryParams) {
+    const nextParams: WalletsQueryParams = {
+      ...activeFilters,
+      ...nextPartial,
+    }
+
+    replaceSearchParams(nextParams)
+  }
+
+  function clearFilters() {
+    replaceSearchParams({})
+  }
+
+  return (
+    <div className='space-y-6'>
+      <div className='flex items-center justify-end'>
+        <Link
+          href='/wallets/new'
+          className='inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800'>
+          New wallet
+        </Link>
+      </div>
+
+      <WalletFilters
+        activeFilters={activeFilters}
+        onUpdateFilters={updateFilters}
+        onClearFilters={clearFilters}
+      />
+
+      {errorMessage ? (
+        <Alert
+          tone='danger'
+          title='Wallets unavailable'
+          description={errorMessage}
+          action={
+            <Button variant='secondary' size='sm' onClick={() => void walletsQuery.refetch()}>
+              Retry
+            </Button>
+          }
+        />
+      ) : null}
+
+      <WalletsView
+        data={walletsQuery.data}
+        isPending={walletsQuery.isPending}
+        isError={walletsQuery.isError && !isUnauthorized}
+        errorMessage={errorMessage}
+        onClearFilters={clearFilters}
+        activeFilters={activeFilters}
+      />
+    </div>
+  )
+}

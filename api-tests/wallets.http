@@ -1,0 +1,61 @@
+@baseUrl = http://localhost:3000
+@sessionCookie = 22222222-2222-2222-2222-222222222222
+
+##############
+### WALLETS ###
+##############
+
+### List all wallets
+GET {{baseUrl}}/api/wallets
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+### List wallets — filter by currency EUR
+GET {{baseUrl}}/api/wallets?currency=EUR
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+### List wallets — filter by currency CZK
+GET {{baseUrl}}/api/wallets?currency=CZK
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+### List wallets — filter by currency USD
+GET {{baseUrl}}/api/wallets?currency=USD
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+### List wallets — filter by currency GBP
+GET {{baseUrl}}/api/wallets?currency=GBP
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+### List wallets — filter by status active
+GET {{baseUrl}}/api/wallets?status=active
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+### List wallets — filter by status limited
+GET {{baseUrl}}/api/wallets?status=limited
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+### List wallets — filter by status suspended
+GET {{baseUrl}}/api/wallets?status=suspended
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+### List wallets — search by name
+GET {{baseUrl}}/api/wallets?search=operating
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+### List wallets — combined search + currency filter
+GET {{baseUrl}}/api/wallets?search=main&currency=EUR
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+### List wallets — combined currency + status filter
+GET {{baseUrl}}/api/wallets?currency=EUR&status=active
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+### List wallets — unauthenticated (expect 401)
+GET {{baseUrl}}/api/wallets
+
+### List wallets — invalid currency (expect 400)
+GET {{baseUrl}}/api/wallets?currency=XYZ
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+### List wallets — invalid status (expect 400)
+GET {{baseUrl}}/api/wallets?status=unknown
+Cookie: fintech_wallet_session={{sessionCookie}}
