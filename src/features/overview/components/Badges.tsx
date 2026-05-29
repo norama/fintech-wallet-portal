@@ -4,6 +4,7 @@ import type {
   AccountVerificationStatus,
   CounterpartyType,
   CurrencyCode,
+  PaymentContactStatus,
   TransactionDirection,
   TransactionStatus,
   TransactionType,
@@ -77,6 +78,10 @@ export function TransactionTypeBadge({ type }: { type: TransactionType }) {
 export function CounterpartyTypeBadge({ type }: { type: CounterpartyType }) {
   const tone = type === 'platform' ? 'muted' : type === 'fx' ? 'warning' : 'neutral'
   return <Badge tone={tone}>{formatLabel(type)}</Badge>
+}
+
+export function ContactStatusBadge({ status }: { status: PaymentContactStatus }) {
+  return <Badge tone={status === 'active' ? 'positive' : 'critical'}>{formatLabel(status)}</Badge>
 }
 
 export function UserRoleBadge({ role }: { role: UserRole | null }) {

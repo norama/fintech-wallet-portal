@@ -94,12 +94,17 @@ export async function GET(request: Request) {
     const from = (parsedQuery.page - 1) * parsedQuery.pageSize
     const to = from + parsedQuery.pageSize - 1
 
-    const contactsResult = await supabase
+    let contactsQuery = supabase
       .from('payment_contacts')
       .select('*', { count: 'exact' })
       .eq('owner_account_id', user.account_id)
-      .order('nickname', { ascending: true })
-      .range(from, to)
+      .order('created_at', { ascending: false })
+
+    if (parsedQuery.search) {
+      contactsQuery = contactsQuery.ilike('nickname', `%${parsedQuery.search}%`)
+    }
+
+    const contactsResult = await contactsQuery.range(from, to)
 
     if (contactsResult.error) {
       throw new Error(`Failed to load contacts: ${contactsResult.error.message}`)

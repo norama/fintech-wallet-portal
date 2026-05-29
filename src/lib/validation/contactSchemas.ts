@@ -3,6 +3,12 @@ import { z } from 'zod'
 export const contactListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(5).max(50).default(20),
+  search: z
+    .string()
+    .trim()
+    .max(120, { error: 'Search must be 120 characters or fewer' })
+    .optional()
+    .transform((v) => (v && v.length > 0 ? v : undefined)),
 })
 
 export type ContactListQuery = z.infer<typeof contactListQuerySchema>

@@ -20,6 +20,7 @@ const navigationItems = [
   { href: '/dashboard', label: 'Overview' },
   { href: '/wallets', label: 'Wallets' },
   { href: '/transactions', label: 'Transactions' },
+  { href: '/contacts', label: 'Contacts' },
   { href: '/payments/new', label: 'New Payment' },
 ] as const
 
