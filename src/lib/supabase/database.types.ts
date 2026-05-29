@@ -25,6 +25,17 @@ export type TransactionStatus = 'completed' | 'pending' | 'failed' | 'reversed' 
 
 export type SignInChallengeMethod = 'mobile_app_code'
 
+export type PaymentContactStatus = 'active' | 'blocked'
+
+export type PaymentContactRow = {
+  id: string
+  owner_account_id: string
+  target_account_id: string
+  nickname: string
+  status: PaymentContactStatus
+  created_at: string
+}
+
 export type AccountRow = {
   id: string
   display_name: string
@@ -169,6 +180,30 @@ export type Database = {
             columns: ['user_id']
             isOneToOne: false
             referencedRelation: 'users'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      payment_contacts: {
+        Row: PaymentContactRow
+        Insert: Omit<PaymentContactRow, 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<PaymentContactRow>
+        Relationships: [
+          {
+            foreignKeyName: 'payment_contacts_owner_account_id_fkey'
+            columns: ['owner_account_id']
+            isOneToOne: false
+            referencedRelation: 'accounts'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'payment_contacts_target_account_id_fkey'
+            columns: ['target_account_id']
+            isOneToOne: false
+            referencedRelation: 'accounts'
             referencedColumns: ['id']
           },
         ]

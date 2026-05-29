@@ -1,0 +1,175 @@
+@baseUrl = http://localhost:3000
+@sessionCookie = 22222222-2222-2222-2222-222222222222
+
+################
+### CONTACTS ###
+################
+
+### List contacts — page 1 (default)
+# Expect: { items: [...], page: 1, pageSize: 20, totalCount: N, pageCount: M }
+# Each item has: id, targetAccountId, targetEmail, targetCurrencies, nickname, status, createdAt
+GET {{baseUrl}}/api/contacts
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+### List contacts — explicit page + smaller pageSize
+# Expect: up to 5 items, pagination fields reflect page 1 / pageSize 5
+GET {{baseUrl}}/api/contacts?page=1&pageSize=5
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+### List contacts — page 2
+# Expect: items starting at offset 5; empty items array if fewer than 6 contacts exist
+GET {{baseUrl}}/api/contacts?page=2&pageSize=5
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+### List contacts — invalid pageSize (below min=5, expect 400)
+GET {{baseUrl}}/api/contacts?pageSize=2
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+### List contacts — invalid pageSize (above max=50, expect 400)
+GET {{baseUrl}}/api/contacts?pageSize=100
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+### List contacts — unauthenticated (expect 401)
+GET {{baseUrl}}/api/contacts
+
+####################
+### ADD CONTACT  ###
+####################
+
+### Add contact — valid (use a real email from your seed data)
+# Expect 201 with ContactsListItem including targetCurrencies array
+POST {{baseUrl}}/api/contacts
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "email": "john.smith@example.com",
+  "nickname": "John"
+}
+
+###
+
+### Add contact — second valid contact
+POST {{baseUrl}}/api/contacts
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "email": "bob@example.com",
+  "nickname": "Bob from accounting"
+}
+
+###
+
+### Add contact — duplicate (same email again, expect 409 DUPLICATE_CONTACT)
+POST {{baseUrl}}/api/contacts
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "email": "alice@example.com",
+  "nickname": "Alice duplicate"
+}
+
+###
+
+### Add contact — self (own account email, expect 400 SELF_CONTACT)
+# Replace with the email of the demo session user
+POST {{baseUrl}}/api/contacts
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "email": "finance@corp.com",
+  "nickname": "Myself"
+}
+
+###
+
+### Add contact — email not found (expect 404 USER_NOT_FOUND)
+POST {{baseUrl}}/api/contacts
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "email": "nobody@nowhere.invalid",
+  "nickname": "Ghost"
+}
+
+###
+
+### Add contact — missing email (expect 400 VALIDATION_ERROR)
+POST {{baseUrl}}/api/contacts
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "nickname": "No Email"
+}
+
+###
+
+### Add contact — invalid email format (expect 400 VALIDATION_ERROR)
+POST {{baseUrl}}/api/contacts
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "email": "not-an-email",
+  "nickname": "Bad Email"
+}
+
+###
+
+### Add contact — missing nickname (expect 400 VALIDATION_ERROR)
+POST {{baseUrl}}/api/contacts
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "email": "carol@example.com"
+}
+
+###
+
+### Add contact — empty nickname (expect 400 VALIDATION_ERROR)
+POST {{baseUrl}}/api/contacts
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "email": "carol@example.com",
+  "nickname": "   "
+}
+
+###
+
+### Add contact — nickname too long (81 chars, expect 400 VALIDATION_ERROR)
+POST {{baseUrl}}/api/contacts
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "email": "john.smith@example.com",
+  "nickname": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}
+
+###
+
+### Add contact — unauthenticated (expect 401)
+POST {{baseUrl}}/api/contacts
+Content-Type: application/json
+
+{
+  "email": "john.smith@example.com",
+  "nickname": "John"
+}
+
+###
+
+### Add contact — invalid JSON body (expect 400 INVALID_JSON)
+POST {{baseUrl}}/api/contacts
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+not-json-at-all

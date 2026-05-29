@@ -4,6 +4,7 @@ import type {
   AccountVerificationStatus,
   CounterpartyType,
   CurrencyCode,
+  PaymentContactStatus,
   TransactionDirection,
   TransactionStatus,
   TransactionType,
@@ -210,4 +211,22 @@ export type PaymentSubmitResponse = {
   status: 'pending' | 'completed'
   reference: string
   createdTransactions: PaymentSubmitTransactionItem[]
+}
+
+export type ContactsListItem = {
+  id: string
+  targetAccountId: string
+  targetEmail: string
+  targetCurrencies: CurrencyCode[]
+  nickname: string
+  status: PaymentContactStatus
+  createdAt: string
+}
+
+export type ContactsListResponse = {
+  items: ContactsListItem[]
+  page: number
+  pageSize: number
+  totalCount: number
+  pageCount: number
 }
