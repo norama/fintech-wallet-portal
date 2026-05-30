@@ -20,6 +20,27 @@ This is not a production banking system. The goal is to demonstrate frontend arc
 
 [Demo deployment](https://fintech-wallet-portal.vercel.app/)
 
+To sign in, use any of these demo e-mails:
+
+```
+finance@corp.com
+john.smith@example.com
+alice@test.com
+bob@test.com
+cecile@test.com
+david@test.com
+eva@test.com
+filip@test.com
+acme@test.com
+blue@test.com
+cloud@test.com
+delta@text.com
+evergreen@test.com
+future@test.com
+```
+
+Then use demo code: `123456`.
+
 ## Tech Stack
 
 - Next.js App Router
