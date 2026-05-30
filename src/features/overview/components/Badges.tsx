@@ -71,8 +71,15 @@ export function TransactionDirectionBadge({ direction }: { direction: Transactio
 }
 
 export function TransactionTypeBadge({ type }: { type: TransactionType }) {
-  const tone = type === 'fee' ? 'critical' : type === 'fx_conversion' ? 'warning' : 'accent'
-  return <Badge tone={tone}>{formatLabel(type)}</Badge>
+  const toneMap: Record<TransactionType, 'accent' | 'info' | 'warning' | 'critical' | 'positive'> =
+    {
+      bank_transfer: 'accent',
+      internal_transfer: 'info',
+      card_payment: 'warning',
+      fee: 'critical',
+      fx_conversion: 'positive',
+    }
+  return <Badge tone={toneMap[type]}>{formatLabel(type)}</Badge>
 }
 
 export function CounterpartyTypeBadge({ type }: { type: CounterpartyType }) {

@@ -14,7 +14,7 @@ import {
   UserRoleBadge,
 } from '@/features/overview/components/Badges'
 import { formatDateTime, formatMaskedReference, formatMoney } from '@/lib/formatters'
-import type { CurrencyCode } from '@/lib/supabase/database.types'
+import type { CurrencyCode, TransactionType } from '@/lib/supabase/database.types'
 import type { OverviewResponse } from '@/lib/types/api'
 
 type AlertItem = {
@@ -158,8 +158,16 @@ export function TransactionItem({
 }: {
   transaction: OverviewResponse['transactions'][number]
 }) {
+  const cardClass: Record<TransactionType, string> = {
+    bank_transfer: 'border-sky-200 bg-sky-50',
+    internal_transfer: 'border-violet-200 bg-violet-50',
+    card_payment: 'border-amber-200 bg-amber-50',
+    fee: 'border-rose-200 bg-rose-50',
+    fx_conversion: 'border-teal-200 bg-teal-50',
+  }
+
   return (
-    <article className='rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-4'>
+    <article className={`rounded-2xl border px-4 py-4 ${cardClass[transaction.transactionType]}`}>
       <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
         <div className='space-y-2'>
           <div className='flex flex-wrap items-center gap-2'>
@@ -195,6 +203,11 @@ export function TransactionItem({
             size='large'
             align='right'
           />
+          {transaction.paymentNote ? (
+            <p className='mt-1 text-sm text-zinc-600'>
+              Note: <span className='font-medium text-zinc-900'>{transaction.paymentNote}</span>
+            </p>
+          ) : null}
           <p className='mt-1 text-sm text-zinc-600'>
             {transaction.completedAt
               ? `Completed ${formatDateTime(transaction.completedAt)}`

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-type BadgeTone = 'neutral' | 'accent' | 'positive' | 'warning' | 'critical' | 'muted'
+type BadgeTone = 'neutral' | 'accent' | 'info' | 'positive' | 'warning' | 'critical' | 'muted'
 type BadgeSize = 'sm' | 'md'
 
 type BadgeProps = {
@@ -12,6 +12,7 @@ type BadgeProps = {
 const toneClasses: Record<BadgeTone, string> = {
   neutral: 'bg-zinc-100 text-zinc-700 ring-zinc-200',
   accent: 'bg-sky-100 text-sky-700 ring-sky-200',
+  info: 'bg-violet-200 text-violet-700 ring-violet-200',
   positive: 'bg-emerald-100 text-emerald-700 ring-emerald-200',
   warning: 'bg-amber-100 text-amber-800 ring-amber-200',
   critical: 'bg-red-100 text-red-700 ring-red-200',

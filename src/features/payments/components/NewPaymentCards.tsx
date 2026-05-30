@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 import type { PaymentPreviewResponse, PaymentSubmitResponse } from '@/features/payments/types'
 import { formatMoney } from '@/lib/formatters'
 
@@ -154,6 +156,14 @@ export function DoneCard({ result }: { result: PaymentSubmitResponse }) {
           ))}
         </div>
       ) : null}
+
+      <div className='flex justify-end'>
+        <Link
+          href={`/transactions?search=${encodeURIComponent(result.reference)}`}
+          className='text-sm font-medium text-sky-700 transition hover:text-sky-900'>
+          View transactions
+        </Link>
+      </div>
     </div>
   )
 }
