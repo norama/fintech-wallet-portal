@@ -2,6 +2,7 @@ import { jsonError, jsonValidationError } from '@/lib/api/responses'
 import { findActiveUserById } from '@/lib/auth/demoAuth'
 import { readDemoSessionUserId } from '@/lib/auth/demoSession'
 import { lookupFxRate } from '@/lib/payments/fxRates'
+import type { CurrencyCode } from '@/lib/supabase/database.types'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import type {
   PaymentAmount,
@@ -128,79 +129,166 @@ export async function POST(request: Request) {
       return Response.json(response)
     }
 
-    // own_wallet_transfer
-    if (input.targetWalletId === input.sourceWalletId) {
-      return jsonError(400, 'SAME_WALLET', 'Target wallet must differ from the source wallet')
+    // own_wallet_transfer ──────────────────────────────────────────────────────
+
+    if (input.paymentType === 'own_wallet_transfer') {
+      if (input.targetWalletId === input.sourceWalletId) {
+        return jsonError(400, 'SAME_WALLET', 'Target wallet must differ from the source wallet')
+      }
+
+      const targetQuery = await supabase
+        .from('wallets')
+        .select('id, name, currency, status')
+        .eq('id', input.targetWalletId)
+        .eq('account_id', user.account_id)
+        .maybeSingle()
+
+      if (targetQuery.error) {
+        throw new Error(`Failed to load target wallet: ${targetQuery.error.message}`)
+      }
+
+      if (!targetQuery.data) {
+        return jsonError(
+          400,
+          'INVALID_TARGET_WALLET',
+          'Target wallet not found or does not belong to your account',
+        )
+      }
+
+      const targetWallet = targetQuery.data
+
+      if (targetWallet.status === 'suspended') {
+        return jsonError(
+          400,
+          'TARGET_WALLET_SUSPENDED',
+          'The target wallet is suspended and cannot receive payments',
+        )
+      }
+
+      let receiveAmountMinor = input.amountMinor
+      let exchangeRate: number | null = null
+
+      if (sourceWallet.currency !== targetWallet.currency) {
+        const rate = lookupFxRate(sourceWallet.currency, targetWallet.currency)
+
+        if (!rate) {
+          return jsonError(
+            400,
+            'FX_RATE_UNAVAILABLE',
+            `No FX rate available for ${sourceWallet.currency} to ${targetWallet.currency}`,
+          )
+        }
+
+        exchangeRate = rate
+        receiveAmountMinor = Math.round(input.amountMinor * rate)
+        warnings.push('FX rate is mocked for demo purposes.')
+      }
+
+      const target: PaymentPreviewTarget = {
+        type: 'own_wallet',
+        name: targetWallet.name,
+        ref: targetWallet.id,
+        currency: targetWallet.currency,
+      }
+
+      const response: PaymentPreviewResponse = {
+        paymentType: 'own_wallet_transfer',
+        paymentNote,
+        source,
+        target,
+        sendAmount: { amountMinor: input.amountMinor, currency: sourceWallet.currency },
+        receiveAmount: { amountMinor: receiveAmountMinor, currency: targetWallet.currency },
+        exchangeRate,
+        estimatedStatus: 'completed',
+        warnings,
+      }
+
+      return Response.json(response)
     }
 
-    const targetQuery = await supabase
-      .from('wallets')
-      .select('id, name, currency, status')
-      .eq('id', input.targetWalletId)
-      .eq('account_id', user.account_id)
+    // internal_contact_transfer ────────────────────────────────────────────────
+
+    const contactQuery = await supabase
+      .from('payment_contacts')
+      .select('id, nickname, target_account_id')
+      .eq('id', input.contactId)
+      .eq('owner_account_id', user.account_id)
+      .eq('status', 'active')
       .maybeSingle()
 
-    if (targetQuery.error) {
-      throw new Error(`Failed to load target wallet: ${targetQuery.error.message}`)
+    if (contactQuery.error) {
+      throw new Error(`Failed to load contact: ${contactQuery.error.message}`)
     }
 
-    if (!targetQuery.data) {
+    if (!contactQuery.data) {
+      return jsonError(400, 'INVALID_CONTACT', 'Contact not found or is not active')
+    }
+
+    const contact = contactQuery.data
+
+    const recipientWalletQuery = await supabase
+      .from('wallets')
+      .select('id, name, currency, status')
+      .eq('account_id', contact.target_account_id)
+      .eq('currency', input.targetCurrency as CurrencyCode)
+      .eq('status', 'active')
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+
+    if (recipientWalletQuery.error) {
+      throw new Error(`Failed to load recipient wallet: ${recipientWalletQuery.error.message}`)
+    }
+
+    if (!recipientWalletQuery.data) {
       return jsonError(
         400,
-        'INVALID_TARGET_WALLET',
-        'Target wallet not found or does not belong to your account',
+        'NO_RECIPIENT_WALLET',
+        `Contact has no active ${input.targetCurrency} wallet`,
       )
     }
 
-    const targetWallet = targetQuery.data
+    const recipientWallet = recipientWalletQuery.data
 
-    if (targetWallet.status === 'suspended') {
-      return jsonError(
-        400,
-        'TARGET_WALLET_SUSPENDED',
-        'The target wallet is suspended and cannot receive payments',
-      )
-    }
+    let contactReceiveAmountMinor = input.amountMinor
+    let contactExchangeRate: number | null = null
 
-    let receiveAmountMinor = input.amountMinor
-    let exchangeRate: number | null = null
-
-    if (sourceWallet.currency !== targetWallet.currency) {
-      const rate = lookupFxRate(sourceWallet.currency, targetWallet.currency)
+    if (sourceWallet.currency !== recipientWallet.currency) {
+      const rate = lookupFxRate(sourceWallet.currency, recipientWallet.currency)
 
       if (!rate) {
         return jsonError(
           400,
           'FX_RATE_UNAVAILABLE',
-          `No FX rate available for ${sourceWallet.currency} to ${targetWallet.currency}`,
+          `No FX rate available for ${sourceWallet.currency} to ${recipientWallet.currency}`,
         )
       }
 
-      exchangeRate = rate
-      receiveAmountMinor = Math.round(input.amountMinor * rate)
+      contactExchangeRate = rate
+      contactReceiveAmountMinor = Math.round(input.amountMinor * rate)
       warnings.push('FX rate is mocked for demo purposes.')
     }
 
-    const target: PaymentPreviewTarget = {
-      type: 'own_wallet',
-      name: targetWallet.name,
-      ref: targetWallet.id,
-      currency: targetWallet.currency,
+    const contactTarget: PaymentPreviewTarget = {
+      type: 'contact_wallet',
+      name: contact.nickname,
+      ref: recipientWallet.id,
+      currency: recipientWallet.currency,
     }
 
-    const response: PaymentPreviewResponse = {
-      paymentType: 'own_wallet_transfer',
+    const contactResponse: PaymentPreviewResponse = {
+      paymentType: 'internal_contact_transfer',
       paymentNote,
       source,
-      target,
+      target: contactTarget,
       sendAmount: { amountMinor: input.amountMinor, currency: sourceWallet.currency },
-      receiveAmount: { amountMinor: receiveAmountMinor, currency: targetWallet.currency },
-      exchangeRate,
+      receiveAmount: { amountMinor: contactReceiveAmountMinor, currency: recipientWallet.currency },
+      exchangeRate: contactExchangeRate,
       estimatedStatus: 'completed',
       warnings,
     }
 
-    return Response.json(response)
+    return Response.json(contactResponse)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to generate payment preview'
     return jsonError(500, 'PREVIEW_FAILED', message)

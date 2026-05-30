@@ -4,12 +4,12 @@ import Link from 'next/link'
 
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { ListFooter } from '@/components/ui/ListFooter'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { CurrencyPill, WalletStatusBadge } from '@/features/overview/components/Badges'
 import type { WalletsListItem, WalletsListResponse } from '@/features/wallets/types'
 import { formatDateTime, formatMaskedReference, formatMoney } from '@/lib/formatters'
-import { NewWalletButton } from './NewWalletButton'
 
 type WalletsViewProps = {
   data?: WalletsListResponse | undefined
@@ -170,31 +170,27 @@ export function WalletsView({
           ) : undefined
         }>
         {data.items.length === 0 ? (
-          <div className='py-6 text-center'>
-            <p className='text-sm font-medium text-zinc-700'>No wallets found</p>
-            {hasActiveFilters ? (
-              <>
-                <p className='mt-1 text-sm text-zinc-500'>No wallets match the current filters.</p>
-                <div className='mt-6'>
-                  <Button variant='secondary' size='sm' onClick={onClearFilters}>
-                    Clear all filters
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <>
-                <p className='mt-1 text-sm text-zinc-500'>
-                  No wallets are associated with this account.
-                </p>
-                <div className='mt-6 flex justify-center'>
-                  <NewWalletButton />
-                </div>
-              </>
-            )}
-          </div>
+          hasActiveFilters ? (
+            <div className='py-6 text-center'>
+              <p className='text-sm font-medium text-zinc-700'>No wallets found</p>
+              <p className='mt-1 text-sm text-zinc-500'>No wallets match the current filters.</p>
+              <div className='mt-6'>
+                <Button variant='secondary' size='sm' onClick={onClearFilters}>
+                  Clear all filters
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <EmptyState
+              title='No wallets found'
+              description='No wallets are associated with this account.'
+              href='/wallets/new'
+              buttonLabel='New wallet'
+            />
+          )
         ) : (
           <div>
-            <div className='hidden sm:grid sm:grid-cols-[minmax(0,4fr)_minmax(0,2fr)_minmax(0,3fr)_minmax(0,3fr)_minmax(0,3fr)_minmax(0,2fr)_minmax(0,3fr)_minmax(0,3fr)] sm:items-center sm:gap-x-5 mb-1 border-b border-sky-200/80 px-5 pb-3 text-xs font-semibold uppercase tracking-widest text-zinc-400'>
+            <div className='hidden sm:grid sm:grid-cols-[minmax(0,4fr)_minmax(0,2fr)_minmax(0,3fr)_minmax(0,3fr)_minmax(0,3fr)_minmax(0,2fr)_minmax(0,3fr)_minmax(0,3fr)] sm:items-center sm:gap-x-5 mb-1 px-5 pb-3 text-xs font-semibold uppercase tracking-widest text-zinc-400'>
               <span>Name</span>
               <span>Currency</span>
               <span>Balance</span>

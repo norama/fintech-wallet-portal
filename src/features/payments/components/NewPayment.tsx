@@ -2,16 +2,18 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useState } from 'react'
-import { useForm, useWatch } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { z } from 'zod'
 
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { Field } from '@/components/ui/Field'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Switch } from '@/components/ui/Switch'
+import { ContactCombobox } from '@/features/payments/components/ContactCombobox'
 import type { PaymentStep } from '@/features/payments/components/NewPaymentCards'
 import {
   DoneCard,
@@ -47,16 +49,31 @@ const ownWalletTransferFormSchema = z.object({
   paymentNote: z.string().max(140, 'Note must be 140 characters or fewer').optional(),
 })
 
+const contactTransferFormSchema = z.object({
+  sourceWalletId: z.string().min(1, 'Source wallet is required'),
+  contactId: z.string().min(1, 'Contact is required'),
+  targetCurrency: z.string().min(1, 'Target currency is required'),
+  amount: z.number({ error: 'Enter a valid amount' }).positive('Amount must be positive'),
+  paymentNote: z.string().max(140, 'Note must be 140 characters or fewer').optional(),
+})
+
 type ExternalTransferFormValues = z.infer<typeof externalTransferFormSchema>
 type OwnWalletTransferFormValues = z.infer<typeof ownWalletTransferFormSchema>
+type ContactTransferFormValues = z.infer<typeof contactTransferFormSchema>
 
-type ActivePaymentType = 'external_transfer' | 'own_wallet_transfer'
+type ActivePaymentType = 'external_transfer' | 'own_wallet_transfer' | 'internal_contact_transfer'
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export function NewPayment() {
+type Props = {
+  initialContactId?: string | undefined
+}
+
+export function NewPayment({ initialContactId }: Props) {
   const [step, setStep] = useState<PaymentStep>('details')
-  const [paymentType, setPaymentType] = useState<ActivePaymentType>('external_transfer')
+  const [paymentType, setPaymentType] = useState<ActivePaymentType>(
+    initialContactId ? 'internal_contact_transfer' : 'external_transfer',
+  )
   const [lastPreviewInput, setLastPreviewInput] = useState<PaymentPreviewInput | null>(null)
   const [previewData, setPreviewData] = useState<PaymentPreviewResponse | null>(null)
   const [submitResult, setSubmitResult] = useState<PaymentSubmitResponse | null>(null)
@@ -67,8 +84,10 @@ export function NewPayment() {
   const submitMutation = useSubmitPayment()
   const { setIsDirty } = useNavigationGuard()
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- options?.wallets is stable from TanStack Query; ?? [] is a harmless fallback
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- options is stable from TanStack Query; ?? [] is a harmless fallback
   const wallets = options?.wallets ?? []
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const contacts = (options?.contacts ?? []).filter((c) => c.availableCurrencies.length > 0)
 
   const externalForm = useForm<ExternalTransferFormValues>({
     resolver: zodResolver(externalTransferFormSchema),
@@ -89,6 +108,18 @@ export function NewPayment() {
       sourceWalletId: '',
       amount: undefined as unknown as number,
       targetWalletId: '',
+      paymentNote: '',
+    },
+  })
+
+  const contactForm = useForm<ContactTransferFormValues>({
+    resolver: zodResolver(contactTransferFormSchema),
+    mode: 'onTouched',
+    defaultValues: {
+      sourceWalletId: '',
+      contactId: initialContactId ?? '',
+      targetCurrency: '',
+      amount: undefined as unknown as number,
       paymentNote: '',
     },
   })
@@ -116,6 +147,17 @@ export function NewPayment() {
       ...(values.paymentNote ? { paymentNote: values.paymentNote } : {}),
     }
     return input
+  }
+
+  function buildContactPreviewInput(values: ContactTransferFormValues): PaymentPreviewInput {
+    return {
+      paymentType: 'internal_contact_transfer',
+      sourceWalletId: values.sourceWalletId,
+      amountMinor: Math.round(values.amount * 100),
+      contactId: values.contactId,
+      targetCurrency: values.targetCurrency,
+      ...(values.paymentNote ? { paymentNote: values.paymentNote } : {}),
+    }
   }
 
   async function handleExternalPreview(values: ExternalTransferFormValues) {
@@ -151,15 +193,30 @@ export function NewPayment() {
     setStep('preview')
   }
 
+  async function handleContactPreview(values: ContactTransferFormValues) {
+    const wallet = wallets.find((w) => w.id === values.sourceWalletId)
+    if (wallet && Math.round(values.amount * 100) > wallet.availableBalanceMinor) {
+      contactForm.setError('amount', {
+        type: 'balance',
+        message: `Exceeds available balance (${formatMoney(wallet.availableBalanceMinor, wallet.currency)})`,
+      })
+      return
+    }
+    const input = buildContactPreviewInput(values)
+    const preview = await previewMutation.mutateAsync(input)
+    setLastPreviewInput(input)
+    setPreviewData(preview)
+    setAuthCode('')
+    setStep('preview')
+  }
+
   async function handleSubmit() {
     if (!lastPreviewInput) return
 
-    let submitInput: PaymentSubmitInput
-    if (lastPreviewInput.paymentType === 'external_transfer') {
-      submitInput = { ...lastPreviewInput, ...(authCode ? { authorizationCode: authCode } : {}) }
-    } else {
-      submitInput = lastPreviewInput
-    }
+    const submitInput: PaymentSubmitInput =
+      lastPreviewInput.paymentType === 'external_transfer'
+        ? { ...lastPreviewInput, ...(authCode ? { authorizationCode: authCode } : {}) }
+        : lastPreviewInput
 
     const result = await submitMutation.mutateAsync(submitInput)
     setSubmitResult(result)
@@ -176,6 +233,7 @@ export function NewPayment() {
     submitMutation.reset()
     externalForm.reset()
     ownWalletForm.reset()
+    contactForm.reset()
   }
 
   const previewError = previewMutation.error?.message ?? null
@@ -185,14 +243,25 @@ export function NewPayment() {
     control: externalForm.control,
     name: 'sourceWalletId',
   })
+  const sourceWalletIdForContact = useWatch({
+    control: contactForm.control,
+    name: 'sourceWalletId',
+  })
+  const contactIdWatch = useWatch({ control: contactForm.control, name: 'contactId' })
   const externalAmount = useWatch({ control: externalForm.control, name: 'amount' })
   const ownAmount = useWatch({ control: ownWalletForm.control, name: 'amount' })
+  const contactAmount = useWatch({ control: contactForm.control, name: 'amount' })
+
+  const selectedContact = contacts.find((c) => c.id === contactIdWatch) ?? null
+  const availableCurrencies = selectedContact?.availableCurrencies ?? []
 
   const externalFormTouched = Object.keys(externalForm.formState.touchedFields).length > 0
   const ownWalletFormTouched = Object.keys(ownWalletForm.formState.touchedFields).length > 0
+  const contactFormTouched = Object.keys(contactForm.formState.touchedFields).length > 0
 
   const isPaymentInProgress =
-    (externalFormTouched || ownWalletFormTouched || step === 'preview') && step !== 'done'
+    (externalFormTouched || ownWalletFormTouched || contactFormTouched || step === 'preview') &&
+    step !== 'done'
 
   useEffect(() => {
     setIsDirty(isPaymentInProgress)
@@ -246,6 +315,27 @@ export function NewPayment() {
     }
   }, [ownAmount, sourceWalletIdForOwn, wallets, ownWalletForm])
 
+  useEffect(() => {
+    contactForm.setValue('targetCurrency', '')
+  }, [contactIdWatch, contactForm])
+
+  useEffect(() => {
+    const wallet = wallets.find((w) => w.id === sourceWalletIdForContact)
+    if (
+      !isNaN(contactAmount) &&
+      contactAmount > 0 &&
+      wallet &&
+      Math.round(contactAmount * 100) > wallet.availableBalanceMinor
+    ) {
+      contactForm.setError('amount', {
+        type: 'balance',
+        message: `Exceeds available balance (${formatMoney(wallet.availableBalanceMinor, wallet.currency)})`,
+      })
+    } else if (contactForm.getFieldState('amount').error?.type === 'balance') {
+      contactForm.clearErrors('amount')
+    }
+  }, [contactAmount, sourceWalletIdForContact, wallets, contactForm])
+
   return (
     <div className='w-full max-w-xl'>
       <Card
@@ -263,6 +353,7 @@ export function NewPayment() {
               options={[
                 { value: 'external_transfer', label: 'External transfer' },
                 { value: 'own_wallet_transfer', label: 'Own wallet' },
+                { value: 'internal_contact_transfer', label: 'Contact' },
               ]}
               value={paymentType}
               onChange={(v) => setPaymentType(v as ActivePaymentType)}
@@ -282,158 +373,301 @@ export function NewPayment() {
 
             {/* External transfer form */}
             {paymentType === 'external_transfer' ? (
-              <form
-                noValidate
-                className='space-y-4'
-                onSubmit={externalForm.handleSubmit(handleExternalPreview)}>
-                <Field
-                  htmlFor='ext-sourceWalletId'
-                  label='Source wallet'
-                  error={externalForm.formState.errors.sourceWalletId?.message}>
-                  <Select
-                    id='ext-sourceWalletId'
-                    disabled={optionsLoading}
-                    {...externalForm.register('sourceWalletId')}>
-                    <option value=''>Select a wallet…</option>
-                    {wallets.map((w) => (
-                      <option key={w.id} value={w.id}>
-                        {w.name} — {formatMoney(w.availableBalanceMinor, w.currency)} available
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-
-                <Field
-                  htmlFor='ext-amount'
-                  label='Amount'
-                  error={externalForm.formState.errors.amount?.message}>
-                  <Input
-                    id='ext-amount'
-                    type='number'
-                    step='0.01'
-                    min='0.01'
-                    placeholder='0.00'
-                    tone={externalForm.formState.errors.amount ? 'error' : 'default'}
-                    {...externalForm.register('amount', { valueAsNumber: true })}
-                  />
-                </Field>
-
-                <Field
-                  htmlFor='ext-recipientAccountRef'
-                  label='Recipient account reference'
-                  hint='IBAN, account number, or other identifier.'
-                  error={externalForm.formState.errors.recipientAccountRef?.message}>
-                  <Input
-                    id='ext-recipientAccountRef'
-                    placeholder='DE99••••1234'
-                    tone={externalForm.formState.errors.recipientAccountRef ? 'error' : 'default'}
-                    {...externalForm.register('recipientAccountRef')}
-                  />
-                </Field>
-
-                <Field
-                  htmlFor='ext-recipientName'
-                  label='Recipient name'
-                  hint='Optional — leave blank if not known.'
-                  error={externalForm.formState.errors.recipientName?.message}>
-                  <Input
-                    id='ext-recipientName'
-                    placeholder='Acme Ltd.'
-                    {...externalForm.register('recipientName')}
-                  />
-                </Field>
-
-                <Field
-                  htmlFor='ext-paymentNote'
-                  label='Payment note'
-                  hint='Optional — up to 140 characters.'
-                  error={externalForm.formState.errors.paymentNote?.message}>
-                  <Input
-                    id='ext-paymentNote'
-                    placeholder='Invoice 2026-0421'
-                    {...externalForm.register('paymentNote')}
-                  />
-                </Field>
-
-                <Button type='submit' block disabled={previewMutation.isPending || optionsLoading}>
-                  {previewMutation.isPending ? 'Getting preview…' : 'Get preview →'}
-                </Button>
-              </form>
-            ) : null}
-
-            {/* Own wallet transfer form */}
-            {paymentType === 'own_wallet_transfer' ? (
-              <form
-                noValidate
-                className='space-y-4'
-                onSubmit={ownWalletForm.handleSubmit(handleOwnWalletPreview)}>
-                <Field
-                  htmlFor='own-sourceWalletId'
-                  label='Source wallet'
-                  error={ownWalletForm.formState.errors.sourceWalletId?.message}>
-                  <Select
-                    id='own-sourceWalletId'
-                    disabled={optionsLoading}
-                    {...ownWalletForm.register('sourceWalletId')}>
-                    <option value=''>Select a wallet…</option>
-                    {wallets.map((w) => (
-                      <option key={w.id} value={w.id}>
-                        {w.name} — {formatMoney(w.availableBalanceMinor, w.currency)} available
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-
-                <Field
-                  htmlFor='own-amount'
-                  label='Amount'
-                  error={ownWalletForm.formState.errors.amount?.message}>
-                  <Input
-                    id='own-amount'
-                    type='number'
-                    step='0.01'
-                    min='0.01'
-                    placeholder='0.00'
-                    tone={ownWalletForm.formState.errors.amount ? 'error' : 'default'}
-                    {...ownWalletForm.register('amount', { valueAsNumber: true })}
-                  />
-                </Field>
-
-                <Field
-                  htmlFor='own-targetWalletId'
-                  label='Target wallet'
-                  error={ownWalletForm.formState.errors.targetWalletId?.message}>
-                  <Select
-                    id='own-targetWalletId'
-                    disabled={optionsLoading}
-                    {...ownWalletForm.register('targetWalletId')}>
-                    <option value=''>Select a wallet…</option>
-                    {wallets
-                      .filter((w) => w.id !== sourceWalletIdForOwn)
-                      .map((w) => (
+              !optionsLoading && !optionsError && wallets.length === 0 ? (
+                <EmptyState
+                  title='No wallets yet'
+                  description='You need at least one wallet to make a payment.'
+                  href='/wallets/new'
+                  buttonLabel='New wallet'
+                />
+              ) : (
+                <form
+                  noValidate
+                  className='space-y-4'
+                  onSubmit={externalForm.handleSubmit(handleExternalPreview)}>
+                  <Field
+                    htmlFor='ext-sourceWalletId'
+                    label='Source wallet'
+                    error={externalForm.formState.errors.sourceWalletId?.message}>
+                    <Select
+                      id='ext-sourceWalletId'
+                      disabled={optionsLoading}
+                      {...externalForm.register('sourceWalletId')}>
+                      <option value=''>Select a wallet…</option>
+                      {wallets.map((w) => (
                         <option key={w.id} value={w.id}>
                           {w.name} — {formatMoney(w.availableBalanceMinor, w.currency)} available
                         </option>
                       ))}
-                  </Select>
-                </Field>
+                    </Select>
+                  </Field>
 
-                <Field
-                  htmlFor='own-paymentNote'
-                  label='Payment note'
-                  hint='Optional — up to 140 characters.'
-                  error={ownWalletForm.formState.errors.paymentNote?.message}>
-                  <Input
-                    id='own-paymentNote'
-                    placeholder='Move funds to CZK wallet'
-                    {...ownWalletForm.register('paymentNote')}
-                  />
-                </Field>
+                  <Field
+                    htmlFor='ext-amount'
+                    label='Amount'
+                    error={externalForm.formState.errors.amount?.message}>
+                    <Input
+                      id='ext-amount'
+                      type='number'
+                      step='0.01'
+                      min='0.01'
+                      placeholder='0.00'
+                      tone={externalForm.formState.errors.amount ? 'error' : 'default'}
+                      {...externalForm.register('amount', { valueAsNumber: true })}
+                    />
+                  </Field>
 
-                <Button type='submit' block disabled={previewMutation.isPending || optionsLoading}>
-                  {previewMutation.isPending ? 'Getting preview…' : 'Get preview →'}
-                </Button>
-              </form>
+                  <Field
+                    htmlFor='ext-recipientAccountRef'
+                    label='Recipient account reference'
+                    hint='IBAN, account number, or other identifier.'
+                    error={externalForm.formState.errors.recipientAccountRef?.message}>
+                    <Input
+                      id='ext-recipientAccountRef'
+                      placeholder='DE99••••1234'
+                      tone={externalForm.formState.errors.recipientAccountRef ? 'error' : 'default'}
+                      {...externalForm.register('recipientAccountRef')}
+                    />
+                  </Field>
+
+                  <Field
+                    htmlFor='ext-recipientName'
+                    label='Recipient name'
+                    hint='Optional — leave blank if not known.'
+                    error={externalForm.formState.errors.recipientName?.message}>
+                    <Input
+                      id='ext-recipientName'
+                      placeholder='Acme Ltd.'
+                      {...externalForm.register('recipientName')}
+                    />
+                  </Field>
+
+                  <Field
+                    htmlFor='ext-paymentNote'
+                    label='Payment note'
+                    hint='Optional — up to 140 characters.'
+                    error={externalForm.formState.errors.paymentNote?.message}>
+                    <Input
+                      id='ext-paymentNote'
+                      placeholder='Invoice 2026-0421'
+                      {...externalForm.register('paymentNote')}
+                    />
+                  </Field>
+
+                  <Button
+                    type='submit'
+                    block
+                    disabled={previewMutation.isPending || optionsLoading}>
+                    {previewMutation.isPending ? 'Getting preview…' : 'Get preview →'}
+                  </Button>
+                </form>
+              )
+            ) : null}
+
+            {/* Contact transfer form */}
+            {paymentType === 'internal_contact_transfer' ? (
+              !optionsLoading && !optionsError && wallets.length === 0 ? (
+                <EmptyState
+                  title='No wallets yet'
+                  description='You need at least one wallet to make a payment.'
+                  href='/wallets/new'
+                  buttonLabel='New wallet'
+                />
+              ) : !optionsLoading && !optionsError && contacts.length === 0 ? (
+                <EmptyState
+                  title='No contacts yet'
+                  description='Add a contact to send money directly to their wallet.'
+                  href='/contacts/new'
+                  buttonLabel='New contact'
+                />
+              ) : (
+                <form
+                  noValidate
+                  className='space-y-4'
+                  onSubmit={contactForm.handleSubmit(handleContactPreview)}>
+                  <Field
+                    htmlFor='ct-sourceWalletId'
+                    label='Source wallet'
+                    error={contactForm.formState.errors.sourceWalletId?.message}>
+                    <Select
+                      id='ct-sourceWalletId'
+                      disabled={optionsLoading}
+                      {...contactForm.register('sourceWalletId')}>
+                      <option value=''>Select a wallet…</option>
+                      {wallets.map((w) => (
+                        <option key={w.id} value={w.id}>
+                          {w.name} — {formatMoney(w.availableBalanceMinor, w.currency)} available
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+
+                  <Field
+                    htmlFor='ct-contactId'
+                    label='Contact'
+                    error={contactForm.formState.errors.contactId?.message}>
+                    <Controller
+                      control={contactForm.control}
+                      name='contactId'
+                      render={({ field, fieldState }) => (
+                        <ContactCombobox
+                          id='ct-contactId'
+                          contacts={contacts}
+                          value={field.value}
+                          onChange={field.onChange}
+                          disabled={optionsLoading}
+                          tone={fieldState.error ? 'error' : 'default'}
+                        />
+                      )}
+                    />
+                  </Field>
+
+                  <Field
+                    htmlFor='ct-targetCurrency'
+                    label='Target currency'
+                    error={contactForm.formState.errors.targetCurrency?.message}>
+                    <Select
+                      id='ct-targetCurrency'
+                      disabled={!contactIdWatch}
+                      {...contactForm.register('targetCurrency')}>
+                      <option value=''>Select currency…</option>
+                      {availableCurrencies.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+
+                  <Field
+                    htmlFor='ct-amount'
+                    label='Amount'
+                    error={contactForm.formState.errors.amount?.message}>
+                    <Input
+                      id='ct-amount'
+                      type='number'
+                      step='0.01'
+                      min='0.01'
+                      placeholder='0.00'
+                      tone={contactForm.formState.errors.amount ? 'error' : 'default'}
+                      {...contactForm.register('amount', { valueAsNumber: true })}
+                    />
+                  </Field>
+
+                  <Field
+                    htmlFor='ct-paymentNote'
+                    label='Payment note'
+                    hint='Optional — up to 140 characters.'
+                    error={contactForm.formState.errors.paymentNote?.message}>
+                    <Input
+                      id='ct-paymentNote'
+                      placeholder='Invoice 2026-0421'
+                      {...contactForm.register('paymentNote')}
+                    />
+                  </Field>
+
+                  <Button
+                    type='submit'
+                    block
+                    disabled={previewMutation.isPending || optionsLoading}>
+                    {previewMutation.isPending ? 'Getting preview…' : 'Get preview →'}
+                  </Button>
+                </form>
+              )
+            ) : null}
+
+            {/* Own wallet transfer form */}
+            {paymentType === 'own_wallet_transfer' ? (
+              !optionsLoading && !optionsError && wallets.length === 0 ? (
+                <EmptyState
+                  title='No wallets yet'
+                  description='You need at least one wallet to make a payment.'
+                  href='/wallets/new'
+                  buttonLabel='New wallet'
+                />
+              ) : !optionsLoading && !optionsError && wallets.length < 2 ? (
+                <EmptyState
+                  title='Only one wallet'
+                  description='You need at least 2 wallets to transfer between them.'
+                  href='/wallets/new'
+                  buttonLabel='New wallet'
+                />
+              ) : (
+                <form
+                  noValidate
+                  className='space-y-4'
+                  onSubmit={ownWalletForm.handleSubmit(handleOwnWalletPreview)}>
+                  <Field
+                    htmlFor='own-sourceWalletId'
+                    label='Source wallet'
+                    error={ownWalletForm.formState.errors.sourceWalletId?.message}>
+                    <Select
+                      id='own-sourceWalletId'
+                      disabled={optionsLoading}
+                      {...ownWalletForm.register('sourceWalletId')}>
+                      <option value=''>Select a wallet…</option>
+                      {wallets.map((w) => (
+                        <option key={w.id} value={w.id}>
+                          {w.name} — {formatMoney(w.availableBalanceMinor, w.currency)} available
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+
+                  <Field
+                    htmlFor='own-amount'
+                    label='Amount'
+                    error={ownWalletForm.formState.errors.amount?.message}>
+                    <Input
+                      id='own-amount'
+                      type='number'
+                      step='0.01'
+                      min='0.01'
+                      placeholder='0.00'
+                      tone={ownWalletForm.formState.errors.amount ? 'error' : 'default'}
+                      {...ownWalletForm.register('amount', { valueAsNumber: true })}
+                    />
+                  </Field>
+
+                  <Field
+                    htmlFor='own-targetWalletId'
+                    label='Target wallet'
+                    error={ownWalletForm.formState.errors.targetWalletId?.message}>
+                    <Select
+                      id='own-targetWalletId'
+                      disabled={optionsLoading}
+                      {...ownWalletForm.register('targetWalletId')}>
+                      <option value=''>Select a wallet…</option>
+                      {wallets
+                        .filter((w) => w.id !== sourceWalletIdForOwn)
+                        .map((w) => (
+                          <option key={w.id} value={w.id}>
+                            {w.name} — {formatMoney(w.availableBalanceMinor, w.currency)} available
+                          </option>
+                        ))}
+                    </Select>
+                  </Field>
+
+                  <Field
+                    htmlFor='own-paymentNote'
+                    label='Payment note'
+                    hint='Optional — up to 140 characters.'
+                    error={ownWalletForm.formState.errors.paymentNote?.message}>
+                    <Input
+                      id='own-paymentNote'
+                      placeholder='Move funds to CZK wallet'
+                      {...ownWalletForm.register('paymentNote')}
+                    />
+                  </Field>
+
+                  <Button
+                    type='submit'
+                    block
+                    disabled={previewMutation.isPending || optionsLoading}>
+                    {previewMutation.isPending ? 'Getting preview…' : 'Get preview →'}
+                  </Button>
+                </form>
+              )
             ) : null}
           </div>
         ) : null}

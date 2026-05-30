@@ -4,6 +4,7 @@ import Link from 'next/link'
 
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { ListFooter } from '@/components/ui/ListFooter'
 import { Skeleton } from '@/components/ui/Skeleton'
 import type { ContactsListItem, ContactsListResponse } from '@/features/contacts/types'
@@ -48,7 +49,7 @@ function ContactRow({ contact }: { contact: ContactsListItem }) {
           <p className='text-xs text-zinc-400'>{formatDateTime(contact.createdAt)}</p>
           {contact.targetCurrencies.length > 0 ? (
             <Link
-              href='/payments/new'
+              href={`/payments/new?contactId=${contact.id}`}
               className='text-sm font-medium text-sky-700 transition hover:text-sky-900'>
               New payment
             </Link>
@@ -81,7 +82,7 @@ function ContactRow({ contact }: { contact: ContactsListItem }) {
         <p className='text-sm text-zinc-700'>{formatDateTime(contact.createdAt)}</p>
         {contact.targetCurrencies.length > 0 ? (
           <Link
-            href='/payments/new'
+            href={`/payments/new?contactId=${contact.id}`}
             className='text-sm font-medium text-sky-700 transition hover:text-sky-900'>
             New payment
           </Link>
@@ -161,33 +162,27 @@ export function ContactsView({
           ) : undefined
         }>
         {data.items.length === 0 ? (
-          <div className='py-6 text-center'>
-            <p className='text-sm font-medium text-zinc-700'>No contacts found</p>
-            {hasActiveSearch ? (
-              <>
-                <p className='mt-1 text-sm text-zinc-500'>No contacts match your search.</p>
-                <div className='mt-6'>
-                  <Button variant='secondary' size='sm' onClick={onClearSearch}>
-                    Clear search
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <>
-                <p className='mt-1 text-sm text-zinc-500'>You have not added any contacts yet.</p>
-                <div className='mt-6 flex justify-center'>
-                  <Link
-                    href='/contacts/new'
-                    className='inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800'>
-                    New contact
-                  </Link>
-                </div>
-              </>
-            )}
-          </div>
+          hasActiveSearch ? (
+            <div className='py-6 text-center'>
+              <p className='text-sm font-medium text-zinc-700'>No contacts found</p>
+              <p className='mt-1 text-sm text-zinc-500'>No contacts match your search.</p>
+              <div className='mt-6'>
+                <Button variant='secondary' size='sm' onClick={onClearSearch}>
+                  Clear search
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <EmptyState
+              title='No contacts yet'
+              description='You have not added any contacts yet.'
+              href='/contacts/new'
+              buttonLabel='New contact'
+            />
+          )
         ) : (
           <div>
-            <div className='hidden sm:grid sm:grid-cols-[minmax(0,3fr)_minmax(0,4fr)_minmax(0,3fr)_minmax(0,2fr)_minmax(0,3fr)_minmax(0,3fr)] sm:items-center sm:gap-x-5 mb-1 border-b border-amber-200/80 px-5 pb-3 text-xs font-semibold uppercase tracking-widest text-zinc-400'>
+            <div className='hidden sm:grid sm:grid-cols-[minmax(0,3fr)_minmax(0,4fr)_minmax(0,3fr)_minmax(0,2fr)_minmax(0,3fr)_minmax(0,3fr)] sm:items-center sm:gap-x-5 mb-1 px-5 pb-3 text-xs font-semibold uppercase tracking-widest text-zinc-400'>
               <span>Nickname</span>
               <span>Email</span>
               <span>Currencies</span>

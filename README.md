@@ -213,15 +213,14 @@ This is a demo prototype. Some intentionally simplified areas:
 - FX rates are mocked
 - no real banking compliance workflow
 - no payment approval workflow yet
+- wallets and contacts are returned as part of payment options - in a production-scale system, contacts would be searched server-side with pagination/typeahead rather than preloaded into the payment form.
 
 ## Possible Next Improvements
 
 Planned or possible additions:
 
-- Wallets page
-- Contacts page
-- New Contact flow
-- internal transfer to saved contacts
+- date based filtering
+- custom sorting
 - payment request / operation history table
 - payment approval workflow
 - audit timeline

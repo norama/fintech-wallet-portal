@@ -1,13 +1,13 @@
 'use client'
 
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import type { ReactNode } from 'react'
 
 import { Button } from '@/components/ui/Button'
 import { useNavigationGuard } from '@/lib/navigation/NavigationGuardContext'
-import { getSignOutMutationOptions } from '@/lib/query/authQuery'
+import { getCurrentUserQueryOptions, getSignOutMutationOptions } from '@/lib/query/authQuery'
 
 type ShellProps = {
   eyebrow: string
@@ -40,6 +40,7 @@ export function Shell({ eyebrow, title, description, children }: ShellProps) {
   const pathname = usePathname()
   const router = useRouter()
   const { isDirty } = useNavigationGuard()
+  const { data: currentUser } = useQuery(getCurrentUserQueryOptions())
   const signOutMutation = useMutation({
     ...getSignOutMutationOptions(),
     onSuccess: async () => {
@@ -99,6 +100,12 @@ export function Shell({ eyebrow, title, description, children }: ShellProps) {
           <div className='flex flex-col gap-3 sm:items-end lg:h-full lg:justify-between'>
             {signOutMutation.error ? (
               <p className='text-sm text-red-600'>{signOutMutation.error.message}</p>
+            ) : null}
+            {currentUser ? (
+              <div className='text-right'>
+                <p className='text-sm font-medium text-zinc-900'>{currentUser.fullName}</p>
+                <p className='hidden text-xs text-zinc-500 sm:block'>{currentUser.email}</p>
+              </div>
             ) : null}
             <Button
               variant='secondary'

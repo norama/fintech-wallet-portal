@@ -177,6 +177,106 @@ Cookie: fintech_wallet_session={{sessionCookie}}
   "authorizationCode": "123456"
 }
 
+###############################
+### CONTACT TRANSFER TESTS  ###
+###############################
+
+# Run GET /api/contacts to obtain a real contactId, then set it below.
+@contactId = 00000000-0000-0000-0000-000000000000
+
+### Options — confirm response now includes contacts array
+GET {{baseUrl}}/api/payments/options
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+
+### Preview contact transfer — same currency (no FX, quick sanity check)
+# Expect: exchangeRate null, receiveAmount == sendAmount, estimatedStatus "completed"
+POST {{baseUrl}}/api/payments/preview
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "paymentType": "internal_contact_transfer",
+  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "contactId": "{{contactId}}",
+  "targetCurrency": "EUR",
+  "amountMinor": 50000,
+  "paymentNote": "Reimbursement for team lunch"
+}
+
+
+### Preview contact transfer — cross-currency EUR → CZK
+# Expect: exchangeRate populated, receiveAmount in CZK, estimatedStatus "completed", FX warning
+POST {{baseUrl}}/api/payments/preview
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "paymentType": "internal_contact_transfer",
+  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "contactId": "{{contactId}}",
+  "targetCurrency": "CZK",
+  "amountMinor": 50000,
+  "paymentNote": "Cross-currency contact payment"
+}
+
+
+### Submit contact transfer — same currency
+# Expect 201, status "completed", two createdTransactions (outgoing + incoming)
+POST {{baseUrl}}/api/payments/submit
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "paymentType": "internal_contact_transfer",
+  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "contactId": "{{contactId}}",
+  "targetCurrency": "EUR",
+  "amountMinor": 10000,
+  "paymentNote": "REST test contact payment"
+}
+
+
+### Error: unknown contact ID (expect 400 INVALID_CONTACT)
+POST {{baseUrl}}/api/payments/preview
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "paymentType": "internal_contact_transfer",
+  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "contactId": "ffffffff-ffff-4fff-afff-ffffffffffff",
+  "targetCurrency": "EUR",
+  "amountMinor": 10000
+}
+
+
+### Error: contact has no wallet for requested currency (expect 400 NO_RECIPIENT_WALLET)
+POST {{baseUrl}}/api/payments/preview
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "paymentType": "internal_contact_transfer",
+  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "contactId": "{{contactId}}",
+  "targetCurrency": "GBP",
+  "amountMinor": 10000
+}
+
+
+### Error: missing contactId field (expect 400 validation error)
+POST {{baseUrl}}/api/payments/preview
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "paymentType": "internal_contact_transfer",
+  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "targetCurrency": "EUR",
+  "amountMinor": 10000
+}
+
 
 ### Submit external transfer - without recipient name
 POST {{baseUrl}}/api/payments/submit

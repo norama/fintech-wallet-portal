@@ -30,9 +30,19 @@ const ownWalletTransferSchema = z.object({
   targetWalletId: uuidLikeSchema,
 })
 
+const contactTransferSchema = z.object({
+  paymentType: z.literal('internal_contact_transfer'),
+  sourceWalletId: uuidLikeSchema,
+  amountMinor: z.number().int().positive('Amount must be greater than 0'),
+  paymentNote: z.string().max(140, 'Payment note must be 140 characters or fewer').optional(),
+  contactId: uuidLikeSchema,
+  targetCurrency: z.string().min(1, 'Target currency is required'),
+})
+
 export const paymentPreviewBodySchema = z.discriminatedUnion('paymentType', [
   externalTransferSchema,
   ownWalletTransferSchema,
+  contactTransferSchema,
 ])
 
 export type PaymentPreviewBody = z.infer<typeof paymentPreviewBodySchema>
@@ -40,6 +50,7 @@ export type PaymentPreviewBody = z.infer<typeof paymentPreviewBodySchema>
 export const paymentSubmitBodySchema = z.discriminatedUnion('paymentType', [
   externalTransferSubmitSchema,
   ownWalletTransferSchema,
+  contactTransferSchema,
 ])
 
 export type PaymentSubmitBody = z.infer<typeof paymentSubmitBodySchema>

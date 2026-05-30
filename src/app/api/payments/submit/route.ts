@@ -1,9 +1,9 @@
-import { jsonError, jsonValidationError } from '@/lib/api/responses'
+import { jsonError, jsonValidationError, toCamelCaseDeep } from '@/lib/api/responses'
 import { findActiveUserById } from '@/lib/auth/demoAuth'
 import { readDemoSessionUserId } from '@/lib/auth/demoSession'
 import { lookupFxRate } from '@/lib/payments/fxRates'
 import { generateReference } from '@/lib/payments/referenceUtils'
-import type { TransactionRow } from '@/lib/supabase/database.types'
+import type { CurrencyCode } from '@/lib/supabase/database.types'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import type { PaymentSubmitResponse, PaymentSubmitTransactionItem } from '@/lib/types/api'
 import { paymentSubmitBodySchema } from '@/lib/validation/paymentSchemas'
@@ -11,33 +11,6 @@ import { paymentSubmitBodySchema } from '@/lib/validation/paymentSchemas'
 export const dynamic = 'force-dynamic'
 
 const DEMO_AUTHORIZATION_CODE = '123456'
-
-type InsertedTxRow = Pick<
-  TransactionRow,
-  | 'id'
-  | 'wallet_id'
-  | 'direction'
-  | 'transaction_type'
-  | 'status'
-  | 'amount_minor'
-  | 'currency'
-  | 'payment_note'
-  | 'reference'
->
-
-function mapTransaction(row: InsertedTxRow): PaymentSubmitTransactionItem {
-  return {
-    id: row.id,
-    walletId: row.wallet_id,
-    direction: row.direction,
-    transactionType: row.transaction_type,
-    status: row.status,
-    amountMinor: row.amount_minor,
-    currency: row.currency,
-    paymentNote: row.payment_note,
-    reference: row.reference,
-  }
-}
 
 const TX_SELECT =
   'id, wallet_id, direction, transaction_type, status, amount_minor, currency, payment_note, reference' as const
@@ -163,7 +136,7 @@ export async function POST(request: Request) {
       const response: PaymentSubmitResponse = {
         status: 'pending',
         reference,
-        createdTransactions: insertResult.data.map(mapTransaction),
+        createdTransactions: toCamelCaseDeep(insertResult) as PaymentSubmitTransactionItem[],
       }
 
       return Response.json(response, { status: 201 })
@@ -171,60 +144,198 @@ export async function POST(request: Request) {
 
     // ── Own wallet transfer ────────────────────────────────────────────────────
 
-    if (input.targetWalletId === input.sourceWalletId) {
-      return jsonError(400, 'SAME_WALLET', 'Target wallet must differ from the source wallet')
+    if (input.paymentType === 'own_wallet_transfer') {
+      if (input.targetWalletId === input.sourceWalletId) {
+        return jsonError(400, 'SAME_WALLET', 'Target wallet must differ from the source wallet')
+      }
+
+      const targetQuery = await supabase
+        .from('wallets')
+        .select(
+          'id, name, currency, balance_minor, available_balance_minor, reserved_balance_minor, status',
+        )
+        .eq('id', input.targetWalletId)
+        .eq('account_id', user.account_id)
+        .maybeSingle()
+
+      if (targetQuery.error) {
+        throw new Error(`Failed to load target wallet: ${targetQuery.error.message}`)
+      }
+
+      if (!targetQuery.data) {
+        return jsonError(
+          400,
+          'INVALID_TARGET_WALLET',
+          'Target wallet not found or does not belong to your account',
+        )
+      }
+
+      const targetWallet = targetQuery.data
+
+      if (targetWallet.status === 'suspended') {
+        return jsonError(
+          400,
+          'TARGET_WALLET_SUSPENDED',
+          'The target wallet is suspended and cannot receive payments',
+        )
+      }
+
+      let receiveAmountMinor = input.amountMinor
+
+      if (sourceWallet.currency !== targetWallet.currency) {
+        const rate = lookupFxRate(sourceWallet.currency, targetWallet.currency)
+
+        if (!rate) {
+          return jsonError(
+            400,
+            'FX_RATE_UNAVAILABLE',
+            `No FX rate available for ${sourceWallet.currency} to ${targetWallet.currency}`,
+          )
+        }
+
+        receiveAmountMinor = Math.round(input.amountMinor * rate)
+      }
+
+      const now = new Date().toISOString()
+
+      const insertResult = await supabase
+        .from('transactions')
+        .insert([
+          {
+            account_id: user.account_id,
+            wallet_id: sourceWallet.id,
+            direction: 'outgoing' as const,
+            transaction_type: 'internal_transfer' as const,
+            counterparty_type: 'internal_wallet' as const,
+            counterparty_name: targetWallet.name,
+            counterparty_ref: targetWallet.id,
+            amount_minor: input.amountMinor,
+            currency: sourceWallet.currency,
+            payment_note: paymentNote,
+            status: 'completed' as const,
+            reference,
+            completed_at: now,
+          },
+          {
+            account_id: user.account_id,
+            wallet_id: targetWallet.id,
+            direction: 'incoming' as const,
+            transaction_type: 'internal_transfer' as const,
+            counterparty_type: 'internal_wallet' as const,
+            counterparty_name: sourceWallet.name,
+            counterparty_ref: sourceWallet.id,
+            amount_minor: receiveAmountMinor,
+            currency: targetWallet.currency,
+            payment_note: paymentNote,
+            status: 'completed' as const,
+            reference,
+            completed_at: now,
+          },
+        ])
+        .select(TX_SELECT)
+
+      if (insertResult.error) {
+        throw new Error(`Failed to insert transactions: ${insertResult.error.message}`)
+      }
+
+      const sourceUpdate = await supabase
+        .from('wallets')
+        .update({
+          balance_minor: sourceWallet.balance_minor - input.amountMinor,
+          available_balance_minor: sourceWallet.available_balance_minor - input.amountMinor,
+        })
+        .eq('id', sourceWallet.id)
+        .eq('account_id', user.account_id)
+
+      if (sourceUpdate.error) {
+        throw new Error(`Failed to update source wallet: ${sourceUpdate.error.message}`)
+      }
+
+      const targetUpdate = await supabase
+        .from('wallets')
+        .update({
+          balance_minor: targetWallet.balance_minor + receiveAmountMinor,
+          available_balance_minor: targetWallet.available_balance_minor + receiveAmountMinor,
+        })
+        .eq('id', targetWallet.id)
+        .eq('account_id', user.account_id)
+
+      if (targetUpdate.error) {
+        throw new Error(`Failed to update target wallet: ${targetUpdate.error.message}`)
+      }
+
+      const response: PaymentSubmitResponse = {
+        status: 'completed',
+        reference,
+        createdTransactions: toCamelCaseDeep(insertResult.data) as PaymentSubmitTransactionItem[],
+      }
+
+      return Response.json(response, { status: 201 })
     }
 
-    const targetQuery = await supabase
-      .from('wallets')
-      .select(
-        'id, name, currency, balance_minor, available_balance_minor, reserved_balance_minor, status',
-      )
-      .eq('id', input.targetWalletId)
-      .eq('account_id', user.account_id)
+    // ── Internal contact transfer ──────────────────────────────────────────────
+
+    const contactQuery = await supabase
+      .from('payment_contacts')
+      .select('id, nickname, target_account_id')
+      .eq('id', input.contactId)
+      .eq('owner_account_id', user.account_id)
+      .eq('status', 'active')
       .maybeSingle()
 
-    if (targetQuery.error) {
-      throw new Error(`Failed to load target wallet: ${targetQuery.error.message}`)
+    if (contactQuery.error) {
+      throw new Error(`Failed to load contact: ${contactQuery.error.message}`)
     }
 
-    if (!targetQuery.data) {
+    if (!contactQuery.data) {
+      return jsonError(400, 'INVALID_CONTACT', 'Contact not found or is not active')
+    }
+
+    const contact = contactQuery.data
+
+    const recipientWalletQuery = await supabase
+      .from('wallets')
+      .select('id, name, currency, balance_minor, available_balance_minor, status')
+      .eq('account_id', contact.target_account_id)
+      .eq('currency', input.targetCurrency as CurrencyCode)
+      .eq('status', 'active')
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+
+    if (recipientWalletQuery.error) {
+      throw new Error(`Failed to load recipient wallet: ${recipientWalletQuery.error.message}`)
+    }
+
+    if (!recipientWalletQuery.data) {
       return jsonError(
         400,
-        'INVALID_TARGET_WALLET',
-        'Target wallet not found or does not belong to your account',
+        'NO_RECIPIENT_WALLET',
+        `Contact has no active ${input.targetCurrency} wallet`,
       )
     }
 
-    const targetWallet = targetQuery.data
+    const recipientWallet = recipientWalletQuery.data
 
-    if (targetWallet.status === 'suspended') {
-      return jsonError(
-        400,
-        'TARGET_WALLET_SUSPENDED',
-        'The target wallet is suspended and cannot receive payments',
-      )
-    }
+    let contactReceiveAmountMinor = input.amountMinor
 
-    let receiveAmountMinor = input.amountMinor
-
-    if (sourceWallet.currency !== targetWallet.currency) {
-      const rate = lookupFxRate(sourceWallet.currency, targetWallet.currency)
+    if (sourceWallet.currency !== recipientWallet.currency) {
+      const rate = lookupFxRate(sourceWallet.currency, recipientWallet.currency)
 
       if (!rate) {
         return jsonError(
           400,
           'FX_RATE_UNAVAILABLE',
-          `No FX rate available for ${sourceWallet.currency} to ${targetWallet.currency}`,
+          `No FX rate available for ${sourceWallet.currency} to ${recipientWallet.currency}`,
         )
       }
 
-      receiveAmountMinor = Math.round(input.amountMinor * rate)
+      contactReceiveAmountMinor = Math.round(input.amountMinor * rate)
     }
 
-    const now = new Date().toISOString()
+    const contactNow = new Date().toISOString()
 
-    const insertResult = await supabase
+    const contactInsertResult = await supabase
       .from('transactions')
       .insert([
         {
@@ -233,38 +344,38 @@ export async function POST(request: Request) {
           direction: 'outgoing' as const,
           transaction_type: 'internal_transfer' as const,
           counterparty_type: 'internal_wallet' as const,
-          counterparty_name: targetWallet.name,
-          counterparty_ref: targetWallet.id,
+          counterparty_name: contact.nickname,
+          counterparty_ref: recipientWallet.id,
           amount_minor: input.amountMinor,
           currency: sourceWallet.currency,
           payment_note: paymentNote,
           status: 'completed' as const,
           reference,
-          completed_at: now,
+          completed_at: contactNow,
         },
         {
-          account_id: user.account_id,
-          wallet_id: targetWallet.id,
+          account_id: contact.target_account_id,
+          wallet_id: recipientWallet.id,
           direction: 'incoming' as const,
           transaction_type: 'internal_transfer' as const,
           counterparty_type: 'internal_wallet' as const,
           counterparty_name: sourceWallet.name,
           counterparty_ref: sourceWallet.id,
-          amount_minor: receiveAmountMinor,
-          currency: targetWallet.currency,
+          amount_minor: contactReceiveAmountMinor,
+          currency: recipientWallet.currency,
           payment_note: paymentNote,
           status: 'completed' as const,
           reference,
-          completed_at: now,
+          completed_at: contactNow,
         },
       ])
       .select(TX_SELECT)
 
-    if (insertResult.error) {
-      throw new Error(`Failed to insert transactions: ${insertResult.error.message}`)
+    if (contactInsertResult.error) {
+      throw new Error(`Failed to insert transactions: ${contactInsertResult.error.message}`)
     }
 
-    const sourceUpdate = await supabase
+    const contactSourceUpdate = await supabase
       .from('wallets')
       .update({
         balance_minor: sourceWallet.balance_minor - input.amountMinor,
@@ -273,30 +384,33 @@ export async function POST(request: Request) {
       .eq('id', sourceWallet.id)
       .eq('account_id', user.account_id)
 
-    if (sourceUpdate.error) {
-      throw new Error(`Failed to update source wallet: ${sourceUpdate.error.message}`)
+    if (contactSourceUpdate.error) {
+      throw new Error(`Failed to update source wallet: ${contactSourceUpdate.error.message}`)
     }
 
-    const targetUpdate = await supabase
+    const recipientUpdate = await supabase
       .from('wallets')
       .update({
-        balance_minor: targetWallet.balance_minor + receiveAmountMinor,
-        available_balance_minor: targetWallet.available_balance_minor + receiveAmountMinor,
+        balance_minor: recipientWallet.balance_minor + contactReceiveAmountMinor,
+        available_balance_minor:
+          recipientWallet.available_balance_minor + contactReceiveAmountMinor,
       })
-      .eq('id', targetWallet.id)
-      .eq('account_id', user.account_id)
+      .eq('id', recipientWallet.id)
+      .eq('account_id', contact.target_account_id)
 
-    if (targetUpdate.error) {
-      throw new Error(`Failed to update target wallet: ${targetUpdate.error.message}`)
+    if (recipientUpdate.error) {
+      throw new Error(`Failed to update recipient wallet: ${recipientUpdate.error.message}`)
     }
 
-    const response: PaymentSubmitResponse = {
+    const contactResponse: PaymentSubmitResponse = {
       status: 'completed',
       reference,
-      createdTransactions: insertResult.data.map(mapTransaction),
+      createdTransactions: toCamelCaseDeep(
+        contactInsertResult.data,
+      ) as PaymentSubmitTransactionItem[],
     }
 
-    return Response.json(response, { status: 201 })
+    return Response.json(contactResponse, { status: 201 })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to submit payment'
     return jsonError(500, 'SUBMIT_FAILED', message)

@@ -177,7 +177,7 @@ export type PaymentsOptionsResponse = {
   contacts: PaymentsContact[]
 }
 
-export type PaymentType = 'external_transfer' | 'own_wallet_transfer'
+export type PaymentType = 'external_transfer' | 'own_wallet_transfer' | 'internal_contact_transfer'
 
 export type PaymentPreviewSource = {
   walletId: string
@@ -188,7 +188,7 @@ export type PaymentPreviewSource = {
 }
 
 export type PaymentPreviewTarget = {
-  type: 'external_account' | 'own_wallet'
+  type: 'external_account' | 'own_wallet' | 'contact_wallet'
   name: string | null
   ref: string
   currency: CurrencyCode

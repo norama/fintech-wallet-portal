@@ -1,4 +1,4 @@
-import type { StartSignInResponse, VerifyCodeResponse } from '@/lib/types/api'
+import type { AuthUserResponse, StartSignInResponse, VerifyCodeResponse } from '@/lib/types/api'
 import type { StartSignInInput, VerifyCodeInput } from '@/lib/validation/authSchemas'
 
 type ApiErrorResponse = {
@@ -21,6 +21,15 @@ async function readJson<T>(response: Response) {
   }
 
   return body as T
+}
+
+export async function getCurrentUser(): Promise<AuthUserResponse> {
+  const response = await fetch('/api/auth/me', {
+    credentials: 'include',
+    cache: 'no-store',
+  })
+
+  return readJson<AuthUserResponse>(response)
 }
 
 export async function startSignIn(input: StartSignInInput) {
