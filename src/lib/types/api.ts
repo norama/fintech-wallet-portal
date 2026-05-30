@@ -160,9 +160,21 @@ export type FxRate = {
   rate: number
 }
 
+export type PaymentsContact = {
+  id: string
+  nickname: string
+  targetAccount: {
+    displayName: string
+    accountType: 'individual' | 'business'
+    verificationStatus: 'verified' | 'pending_review' | 'restricted'
+  }
+  availableCurrencies: CurrencyCode[]
+}
+
 export type PaymentsOptionsResponse = {
   wallets: PaymentsWallet[]
   fxRates: FxRate[]
+  contacts: PaymentsContact[]
 }
 
 export type PaymentType = 'external_transfer' | 'own_wallet_transfer'
