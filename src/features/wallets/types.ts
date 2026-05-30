@@ -14,7 +14,11 @@ export const WALLET_STATUS_OPTIONS = [
   'suspended',
 ] as const satisfies WalletStatus[]
 
+export const DEFAULT_WALLETS_PAGE_SIZE = 10
+
 export type WalletsQueryParams = {
+  page?: number | undefined
+  pageSize?: number | undefined
   search?: string | undefined
   currency?: CurrencyCode | undefined
   status?: WalletStatus | undefined
@@ -52,6 +56,14 @@ export function toWalletsSearchParams(params: WalletsQueryParams = {}) {
 
   if (normalized.search) {
     searchParams.set('search', normalized.search)
+  }
+
+  if (normalized.page > 1) {
+    searchParams.set('page', String(normalized.page))
+  }
+
+  if (normalized.pageSize !== DEFAULT_WALLETS_PAGE_SIZE) {
+    searchParams.set('pageSize', String(normalized.pageSize))
   }
 
   if (normalized.currency) {

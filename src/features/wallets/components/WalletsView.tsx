@@ -4,13 +4,10 @@ import Link from 'next/link'
 
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { ListFooter } from '@/components/ui/ListFooter'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { CurrencyPill, WalletStatusBadge } from '@/features/overview/components/Badges'
-import type {
-  WalletsListItem,
-  WalletsListResponse,
-  WalletsQueryParams,
-} from '@/features/wallets/types'
+import type { WalletsListItem, WalletsListResponse } from '@/features/wallets/types'
 import { formatDateTime, formatMaskedReference, formatMoney } from '@/lib/formatters'
 import { NewWalletButton } from './NewWalletButton'
 
@@ -19,8 +16,10 @@ type WalletsViewProps = {
   isPending: boolean
   isError: boolean
   errorMessage: string | null
+  hasActiveFilters: boolean
   onClearFilters?: (() => void) | undefined
-  activeFilters: WalletsQueryParams
+  onPage: (page: number) => void
+  onPageSize: (pageSize: number) => void
 }
 
 function WalletRow({ wallet }: { wallet: WalletsListItem }) {
@@ -70,37 +69,29 @@ function WalletRow({ wallet }: { wallet: WalletsListItem }) {
       </div>
 
       {/* Desktop layout */}
-      <div className='hidden sm:grid sm:grid-cols-[minmax(0,1.5fr)_auto_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto_auto_auto] sm:items-center sm:gap-x-5'>
+      <div className='hidden sm:grid sm:grid-cols-[minmax(0,4fr)_minmax(0,2fr)_minmax(0,3fr)_minmax(0,3fr)_minmax(0,3fr)_minmax(0,2fr)_minmax(0,3fr)_minmax(0,3fr)] sm:items-center sm:gap-x-5'>
         <div className='min-w-0'>
           <p className='truncate font-medium text-zinc-950'>{wallet.name}</p>
           <p className='mt-0.5 font-mono text-xs text-zinc-400'>
             {formatMaskedReference(wallet.id)}
           </p>
         </div>
-        <CurrencyPill currency={wallet.currency} isPrimary={wallet.isPrimary} />
         <div>
-          <p className='text-xs text-zinc-400'>Balance</p>
-          <p className='text-sm font-semibold text-zinc-950'>
-            {formatMoney(wallet.balanceMinor, wallet.currency)}
-          </p>
+          <CurrencyPill currency={wallet.currency} isPrimary={wallet.isPrimary} />
         </div>
+        <p className='text-sm font-semibold text-zinc-950'>
+          {formatMoney(wallet.balanceMinor, wallet.currency)}
+        </p>
+        <p className='text-sm font-semibold text-emerald-700'>
+          {formatMoney(wallet.availableBalanceMinor, wallet.currency)}
+        </p>
+        <p className='text-sm font-semibold text-zinc-700'>
+          {formatMoney(wallet.reservedBalanceMinor, wallet.currency)}
+        </p>
         <div>
-          <p className='text-xs text-zinc-400'>Available</p>
-          <p className='text-sm font-semibold text-emerald-700'>
-            {formatMoney(wallet.availableBalanceMinor, wallet.currency)}
-          </p>
+          <WalletStatusBadge status={wallet.status} />
         </div>
-        <div>
-          <p className='text-xs text-zinc-400'>Reserved</p>
-          <p className='text-sm font-semibold text-zinc-700'>
-            {formatMoney(wallet.reservedBalanceMinor, wallet.currency)}
-          </p>
-        </div>
-        <WalletStatusBadge status={wallet.status} />
-        <div>
-          <p className='text-xs text-zinc-400'>Created</p>
-          <p className='text-sm text-zinc-700'>{formatDateTime(wallet.createdAt)}</p>
-        </div>
+        <p className='text-sm text-zinc-700'>{formatDateTime(wallet.createdAt)}</p>
         <Link
           href={`/transactions?walletId=${wallet.id}`}
           className='text-sm font-medium text-sky-700 transition hover:text-sky-900'>
@@ -136,8 +127,10 @@ export function WalletsView({
   isPending,
   isError,
   errorMessage,
+  hasActiveFilters,
   onClearFilters,
-  activeFilters,
+  onPage,
+  onPageSize,
 }: WalletsViewProps) {
   if (isPending) {
     return <WalletsListSkeleton />
@@ -157,24 +150,24 @@ export function WalletsView({
     return null
   }
 
-  const hasActiveFilters =
-    Boolean(activeFilters.search) ||
-    Boolean(activeFilters.currency) ||
-    Boolean(activeFilters.status) ||
-    Boolean(activeFilters.isPrimary)
-
   return (
     <div className='space-y-6'>
       <Card
         tone='wallet'
-        eyebrow='Wallet inventory'
-        title='Wallets'
-        description='All wallets in this account. Balances are shown in their native currency.'
         footer={
-          <p className='text-sm text-zinc-500'>
-            {data.items.length} {data.items.length === 1 ? 'wallet' : 'wallets'}
-            {hasActiveFilters ? ' matching current filters' : ' total'}
-          </p>
+          data.totalCount > 0 ? (
+            <ListFooter
+              totalCount={data.totalCount}
+              singularLabel='wallet'
+              qualifier={hasActiveFilters ? 'matching current filters' : undefined}
+              page={data.page}
+              pageCount={data.pageCount}
+              pageSize={data.pageSize}
+              onPreviousPage={() => onPage(data.page - 1)}
+              onNextPage={() => onPage(data.page + 1)}
+              onPageSizeChange={onPageSize}
+            />
+          ) : undefined
         }>
         {data.items.length === 0 ? (
           <div className='py-6 text-center'>
@@ -200,10 +193,22 @@ export function WalletsView({
             )}
           </div>
         ) : (
-          <div className='space-y-3'>
-            {data.items.map((wallet) => (
-              <WalletRow key={wallet.id} wallet={wallet} />
-            ))}
+          <div>
+            <div className='hidden sm:grid sm:grid-cols-[minmax(0,4fr)_minmax(0,2fr)_minmax(0,3fr)_minmax(0,3fr)_minmax(0,3fr)_minmax(0,2fr)_minmax(0,3fr)_minmax(0,3fr)] sm:items-center sm:gap-x-5 mb-1 border-b border-sky-200/80 px-5 pb-3 text-xs font-semibold uppercase tracking-widest text-zinc-400'>
+              <span>Name</span>
+              <span>Currency</span>
+              <span>Balance</span>
+              <span>Available</span>
+              <span>Reserved</span>
+              <span>Status</span>
+              <span>Created</span>
+              <span />
+            </div>
+            <div className='space-y-3'>
+              {data.items.map((wallet) => (
+                <WalletRow key={wallet.id} wallet={wallet} />
+              ))}
+            </div>
           </div>
         )}
       </Card>

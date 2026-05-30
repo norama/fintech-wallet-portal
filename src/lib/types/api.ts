@@ -129,6 +129,10 @@ export type WalletsSummary = {
 export type WalletsListResponse = {
   items: WalletsListItem[]
   summary: WalletsSummary
+  page: number
+  pageSize: number
+  totalCount: number
+  pageCount: number
 }
 
 export type StartSignInResponse = {

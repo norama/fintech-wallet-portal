@@ -33,6 +33,12 @@ export function Wallets() {
   const isUnauthorized = requestError?.status === 401
   const errorMessage = !isUnauthorized && requestError ? requestError.message : null
 
+  const hasActiveFilters =
+    Boolean(activeFilters.search) ||
+    Boolean(activeFilters.currency) ||
+    Boolean(activeFilters.status) ||
+    Boolean(activeFilters.isPrimary)
+
   function replaceSearchParams(nextParams: WalletsQueryParams) {
     const nextSearchParams = toWalletsSearchParams(nextParams)
     const queryString = nextSearchParams.toString()
@@ -46,9 +52,18 @@ export function Wallets() {
     const nextParams: WalletsQueryParams = {
       ...activeFilters,
       ...nextPartial,
+      page: 1,
     }
 
     replaceSearchParams(nextParams)
+  }
+
+  function handlePage(page: number) {
+    replaceSearchParams({ ...activeFilters, page })
+  }
+
+  function handlePageSize(pageSize: number) {
+    replaceSearchParams({ ...activeFilters, pageSize, page: 1 })
   }
 
   function clearFilters() {
@@ -83,8 +98,10 @@ export function Wallets() {
         isPending={walletsQuery.isPending}
         isError={walletsQuery.isError && !isUnauthorized}
         errorMessage={errorMessage}
+        hasActiveFilters={hasActiveFilters}
         onClearFilters={clearFilters}
-        activeFilters={activeFilters}
+        onPage={handlePage}
+        onPageSize={handlePageSize}
       />
     </div>
   )

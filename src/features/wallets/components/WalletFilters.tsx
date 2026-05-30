@@ -7,10 +7,14 @@ import { SearchInput } from '@/components/ui/SearchInput'
 import { Select } from '@/components/ui/Select'
 import { Switch } from '@/components/ui/Switch'
 import {
+  DEFAULT_WALLETS_PAGE_SIZE,
   WALLET_CURRENCY_OPTIONS,
   WALLET_STATUS_OPTIONS,
   type WalletsQueryParams,
 } from '@/features/wallets/types'
+import { useDebouncedSearch } from '@/lib/hooks/useDebouncedSearch'
+
+const pageSizeOptions = [5, 10, 20, 50] as const
 
 function toLabel(value: string) {
   return value
@@ -44,24 +48,22 @@ export function WalletFilters({
     Boolean(activeFilters.status) ||
     Boolean(activeFilters.isPrimary)
 
+  const searchProps = useDebouncedSearch(activeFilters.search, (value) =>
+    onUpdateFilters({ search: value }),
+  )
+
   return (
     <Card tone='wallet' eyebrow='Wallet filters' title='Filters'>
       <div className='flex flex-col gap-4'>
         <Field htmlFor='wallets-search' label='Search'>
           <SearchInput
             id='wallets-search'
-            value={activeFilters.search ?? ''}
-            onChange={(event) => {
-              onUpdateFilters({ search: event.target.value || undefined })
-            }}
-            onClear={() => {
-              onUpdateFilters({ search: undefined })
-            }}
-            placeholder='Search wallet name'
+            {...searchProps}
+            placeholder='Search by name, currency or status'
           />
         </Field>
 
-        <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+        <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-5'>
           <Field htmlFor='wallets-currency' label='Currency'>
             <Select
               id='wallets-currency'
@@ -108,6 +110,21 @@ export function WalletFilters({
               value={activeFilters.isPrimary ? 'primary' : 'all'}
               onChange={(v) => onUpdateFilters({ isPrimary: v === 'primary' ? true : undefined })}
             />
+          </Field>
+
+          <Field htmlFor='wallets-page-size' label='Page size'>
+            <Select
+              id='wallets-page-size'
+              value={String(activeFilters.pageSize ?? DEFAULT_WALLETS_PAGE_SIZE)}
+              onChange={(event) => {
+                onUpdateFilters({ pageSize: Number(event.target.value) })
+              }}>
+              {pageSizeOptions.map((size) => (
+                <option key={size} value={size}>
+                  {size} per page
+                </option>
+              ))}
+            </Select>
           </Field>
 
           <div className='flex items-end justify-end'>

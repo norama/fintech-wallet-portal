@@ -11,6 +11,7 @@ import { TransactionsHistoryView } from '@/features/transactions/components/Tran
 import { useTransactions } from '@/features/transactions/hooks/useTransactions'
 import {
   DEFAULT_TRANSACTIONS_PAGE,
+  DEFAULT_TRANSACTIONS_PAGE_SIZE,
   parseTransactionsSearchParams,
   toTransactionsSearchParams,
   type TransactionsQueryParams,
@@ -96,12 +97,15 @@ export function Transactions() {
       <TransactionsHistoryView
         data={transactionsQuery.data}
         isPending={transactionsQuery.isPending}
-        page={activeFilters.page}
+        pageSize={activeFilters.pageSize ?? DEFAULT_TRANSACTIONS_PAGE_SIZE}
         onPreviousPage={() => {
           updateFilters({ page: activeFilters.page - 1 }, { resetPage: false })
         }}
         onNextPage={() => {
           updateFilters({ page: activeFilters.page + 1 }, { resetPage: false })
+        }}
+        onPageSizeChange={(pageSize) => {
+          updateFilters({ pageSize }, { resetPage: true })
         }}
         onClearFilters={hasActiveFilters ? clearFilters : undefined}
       />

@@ -13,9 +13,9 @@ type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'> & 
 const variantClasses: Record<ButtonVariant, string> = {
   primary: 'bg-zinc-950 text-white hover:bg-zinc-800 disabled:bg-zinc-300 disabled:text-zinc-500',
   secondary:
-    'border border-zinc-300 bg-white text-zinc-900 hover:border-zinc-950 hover:bg-zinc-50 disabled:border-zinc-200 disabled:text-zinc-400',
+    'border border-zinc-300 bg-white text-zinc-900 hover:border-zinc-600 hover:bg-zinc-50 disabled:border-zinc-200 disabled:text-zinc-400',
   ghost:
-    'bg-transparent text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950 disabled:text-zinc-400',
+    'bg-transparent text-zinc-700 hover:bg-zinc-100 hover:text-zinc-600 disabled:text-zinc-400',
   danger: 'bg-red-600 text-white hover:bg-red-500 disabled:bg-red-200 disabled:text-red-400',
 }
 

@@ -5,6 +5,7 @@ import { Fragment, useState } from 'react'
 
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { ListFooter } from '@/components/ui/ListFooter'
 import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton'
 import { TransactionAmount } from '@/components/ui/TransactionAmount'
 import {
@@ -22,9 +23,10 @@ import type { TransactionsListItem } from '@/lib/types/api'
 type TransactionsHistoryViewProps = {
   data?: TransactionsListResponse | undefined
   isPending: boolean
-  page: number
+  pageSize: number
   onPreviousPage: () => void
   onNextPage: () => void
+  onPageSizeChange: (pageSize: number) => void
   onClearFilters?: (() => void) | undefined
 }
 
@@ -201,9 +203,10 @@ function HistoryTableSkeleton() {
 export function TransactionsHistoryView({
   data,
   isPending,
-  page,
+  pageSize,
   onPreviousPage,
   onNextPage,
+  onPageSizeChange,
   onClearFilters,
 }: TransactionsHistoryViewProps) {
   const [expandedTransactionIdState, setExpandedTransactionId] = useState<string | null>(null)
@@ -224,30 +227,19 @@ export function TransactionsHistoryView({
   return (
     <Card
       tone='transaction'
-      eyebrow='Transaction history'
-      title='Transactions'
-      description='Scoped transaction history with pagination. Click a row to inspect operational and audit details.'
       footer={
-        <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-          <p className='text-sm text-zinc-700'>
-            {data.totalCount} {data.totalCount === 1 ? 'transaction' : 'transactions'}
-          </p>
-          <div className='flex items-center gap-3'>
-            <Button variant='secondary' size='sm' disabled={page <= 1} onClick={onPreviousPage}>
-              Previous
-            </Button>
-            <span className='text-sm text-zinc-700'>
-              Page {data.page} of {data.pageCount || 1}
-            </span>
-            <Button
-              variant='secondary'
-              size='sm'
-              disabled={data.pageCount === 0 || page >= data.pageCount}
-              onClick={onNextPage}>
-              Next
-            </Button>
-          </div>
-        </div>
+        data.totalCount > 0 ? (
+          <ListFooter
+            totalCount={data.totalCount}
+            singularLabel='transaction'
+            page={data.page}
+            pageCount={data.pageCount}
+            pageSize={pageSize}
+            onPreviousPage={onPreviousPage}
+            onNextPage={onNextPage}
+            onPageSizeChange={onPageSizeChange}
+          />
+        ) : undefined
       }>
       {!hasItems ? (
         <div className='rounded-2xl border border-violet-200 bg-white/70 px-5 py-10 text-center'>

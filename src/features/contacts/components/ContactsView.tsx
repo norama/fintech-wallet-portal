@@ -4,6 +4,7 @@ import Link from 'next/link'
 
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { ListFooter } from '@/components/ui/ListFooter'
 import { Skeleton } from '@/components/ui/Skeleton'
 import type { ContactsListItem, ContactsListResponse } from '@/features/contacts/types'
 import { ContactStatusBadge, CurrencyPill } from '@/features/overview/components/Badges'
@@ -17,6 +18,7 @@ type ContactsViewProps = {
   hasActiveSearch: boolean
   onClearSearch?: (() => void) | undefined
   onPage: (page: number) => void
+  onPageSize: (pageSize: number) => void
 }
 
 function ContactRow({ contact }: { contact: ContactsListItem }) {
@@ -27,7 +29,11 @@ function ContactRow({ contact }: { contact: ContactsListItem }) {
         <div className='flex items-start justify-between gap-3'>
           <div className='min-w-0'>
             <p className='truncate font-medium text-zinc-950'>{contact.nickname}</p>
-            <p className='mt-0.5 text-xs text-zinc-400'>{contact.targetEmail}</p>
+            <a
+              href={`mailto:${contact.targetEmail}`}
+              className='mt-0.5 block truncate text-xs text-zinc-400 hover:underline'>
+              {contact.targetEmail}
+            </a>
           </div>
           <ContactStatusBadge status={contact.status} />
         </div>
@@ -40,37 +46,48 @@ function ContactRow({ contact }: { contact: ContactsListItem }) {
         )}
         <div className='mt-3 flex items-center justify-between border-t border-amber-100 pt-3'>
           <p className='text-xs text-zinc-400'>{formatDateTime(contact.createdAt)}</p>
-          <Link
-            href='/payments/new'
-            className='text-sm font-medium text-orange-700 transition hover:text-orange-900'>
-            Send payment
-          </Link>
+          {contact.targetCurrencies.length > 0 ? (
+            <Link
+              href='/payments/new'
+              className='text-sm font-medium text-sky-700 transition hover:text-sky-900'>
+              New payment
+            </Link>
+          ) : (
+            <span className='cursor-not-allowed text-sm font-medium text-zinc-300'>
+              New payment
+            </span>
+          )}
         </div>
       </div>
 
       {/* Desktop layout */}
-      <div className='hidden sm:grid sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_auto_auto_auto] sm:items-center sm:gap-x-5'>
-        <div className='min-w-0'>
-          <p className='truncate font-medium text-zinc-950'>{contact.nickname}</p>
-          <p className='mt-0.5 text-xs text-zinc-400'>{contact.targetEmail}</p>
-        </div>
+      <div className='hidden sm:grid sm:grid-cols-[minmax(0,3fr)_minmax(0,4fr)_minmax(0,3fr)_minmax(0,2fr)_minmax(0,3fr)_minmax(0,3fr)] sm:items-center sm:gap-x-5'>
+        <p className='truncate font-medium text-zinc-950'>{contact.nickname}</p>
+        <a
+          href={`mailto:${contact.targetEmail}`}
+          className='truncate text-sm text-zinc-500 transition hover:text-zinc-700 hover:underline'>
+          {contact.targetEmail}
+        </a>
         <div className='flex flex-wrap gap-1.5'>
           {contact.targetCurrencies.length > 0 ? (
             contact.targetCurrencies.map((c) => <CurrencyPill key={c} currency={c} />)
           ) : (
-            <span className='text-xs text-zinc-400'>No wallets</span>
+            <span className='text-xs text-zinc-400'>No currencies</span>
           )}
         </div>
-        <ContactStatusBadge status={contact.status} />
         <div>
-          <p className='text-xs text-zinc-400'>Added</p>
-          <p className='text-sm text-zinc-700'>{formatDateTime(contact.createdAt)}</p>
+          <ContactStatusBadge status={contact.status} />
         </div>
-        <Link
-          href='/payments/new'
-          className='text-sm font-medium text-orange-700 transition hover:text-orange-900'>
-          Send payment
-        </Link>
+        <p className='text-sm text-zinc-700'>{formatDateTime(contact.createdAt)}</p>
+        {contact.targetCurrencies.length > 0 ? (
+          <Link
+            href='/payments/new'
+            className='text-sm font-medium text-sky-700 transition hover:text-sky-900'>
+            New payment
+          </Link>
+        ) : (
+          <span className='cursor-not-allowed text-sm font-medium text-zinc-300'>New payment</span>
+        )}
       </div>
     </div>
   )
@@ -104,6 +121,7 @@ export function ContactsView({
   hasActiveSearch,
   onClearSearch,
   onPage,
+  onPageSize,
 }: ContactsViewProps) {
   if (isPending) {
     return <ContactsListSkeleton />
@@ -123,44 +141,25 @@ export function ContactsView({
     return null
   }
 
-  const countLabel = `${data.totalCount} ${data.totalCount === 1 ? 'contact' : 'contacts'}${hasActiveSearch ? ' matching search' : ' total'}`
-
-  const footer =
-    data.pageCount > 1 ? (
-      <div className='flex items-center justify-between'>
-        <p className='text-sm text-zinc-500'>{countLabel}</p>
-        <div className='flex items-center gap-3'>
-          <Button
-            variant='secondary'
-            size='sm'
-            disabled={data.page <= 1}
-            onClick={() => onPage(data.page - 1)}>
-            Previous
-          </Button>
-          <span className='text-sm text-zinc-500'>
-            {data.page} / {data.pageCount}
-          </span>
-          <Button
-            variant='secondary'
-            size='sm'
-            disabled={data.page >= data.pageCount}
-            onClick={() => onPage(data.page + 1)}>
-            Next
-          </Button>
-        </div>
-      </div>
-    ) : data.totalCount > 0 ? (
-      <p className='text-sm text-zinc-500'>{countLabel}</p>
-    ) : undefined
-
   return (
     <div className='space-y-6'>
       <Card
         tone='status'
-        eyebrow='Contact list'
-        title='Contacts'
-        description='Saved recipients for internal transfers. Select a contact to send a payment to their primary wallet.'
-        footer={footer}>
+        footer={
+          data.totalCount > 0 ? (
+            <ListFooter
+              totalCount={data.totalCount}
+              singularLabel='contact'
+              qualifier={hasActiveSearch ? 'matching search' : undefined}
+              page={data.page}
+              pageCount={data.pageCount}
+              pageSize={data.pageSize}
+              onPreviousPage={() => onPage(data.page - 1)}
+              onNextPage={() => onPage(data.page + 1)}
+              onPageSizeChange={onPageSize}
+            />
+          ) : undefined
+        }>
         {data.items.length === 0 ? (
           <div className='py-6 text-center'>
             <p className='text-sm font-medium text-zinc-700'>No contacts found</p>
@@ -187,10 +186,20 @@ export function ContactsView({
             )}
           </div>
         ) : (
-          <div className='space-y-3'>
-            {data.items.map((contact) => (
-              <ContactRow key={contact.id} contact={contact} />
-            ))}
+          <div>
+            <div className='hidden sm:grid sm:grid-cols-[minmax(0,3fr)_minmax(0,4fr)_minmax(0,3fr)_minmax(0,2fr)_minmax(0,3fr)_minmax(0,3fr)] sm:items-center sm:gap-x-5 mb-1 border-b border-amber-200/80 px-5 pb-3 text-xs font-semibold uppercase tracking-widest text-zinc-400'>
+              <span>Nickname</span>
+              <span>Email</span>
+              <span>Currencies</span>
+              <span>Status</span>
+              <span>Added</span>
+              <span />
+            </div>
+            <div className='space-y-3'>
+              {data.items.map((contact) => (
+                <ContactRow key={contact.id} contact={contact} />
+              ))}
+            </div>
           </div>
         )}
       </Card>

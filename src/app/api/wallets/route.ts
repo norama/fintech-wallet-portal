@@ -102,7 +102,12 @@ export async function GET(request: Request) {
 
     if (parsedQuery.search) {
       const pattern = sanitizeSearchTerm(parsedQuery.search).toLowerCase()
-      filteredRows = filteredRows.filter((row) => row.name.toLowerCase().includes(pattern))
+      filteredRows = filteredRows.filter(
+        (row) =>
+          row.name.toLowerCase().includes(pattern) ||
+          row.currency.toLowerCase().includes(pattern) ||
+          row.status.toLowerCase().includes(pattern),
+      )
     }
 
     if (parsedQuery.currency) {
@@ -119,9 +124,21 @@ export async function GET(request: Request) {
       filteredRows = filteredRows.filter((row) => row.is_primary)
     }
 
-    const items = toCamelCaseDeep(filteredRows) as WalletsListItem[]
+    const totalCount = filteredRows.length
+    const pageCount = totalCount === 0 ? 0 : Math.ceil(totalCount / parsedQuery.pageSize)
+    const from = (parsedQuery.page - 1) * parsedQuery.pageSize
+    const pagedRows = filteredRows.slice(from, from + parsedQuery.pageSize)
 
-    const response: WalletsListResponse = { items, summary }
+    const items = toCamelCaseDeep(pagedRows) as WalletsListItem[]
+
+    const response: WalletsListResponse = {
+      items,
+      summary,
+      page: parsedQuery.page,
+      pageSize: parsedQuery.pageSize,
+      totalCount,
+      pageCount,
+    }
 
     return Response.json(response)
   } catch (error) {

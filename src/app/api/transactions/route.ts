@@ -131,7 +131,7 @@ export async function GET(request: Request) {
 
       if (searchPattern) {
         transactionsQuery = transactionsQuery.or(
-          `counterparty_name.ilike.${searchPattern},reference.ilike.${searchPattern},payment_note.ilike.${searchPattern}`,
+          `counterparty_name.ilike.${searchPattern},transaction_type.ilike.${searchPattern},status.ilike.${searchPattern},reference.ilike.${searchPattern},payment_note.ilike.${searchPattern}`,
         )
       }
     }

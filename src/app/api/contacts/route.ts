@@ -101,7 +101,22 @@ export async function GET(request: Request) {
       .order('created_at', { ascending: false })
 
     if (parsedQuery.search) {
-      contactsQuery = contactsQuery.ilike('nickname', `%${parsedQuery.search}%`)
+      const emailSearchResult = await supabase
+        .from('users')
+        .select('account_id')
+        .ilike('email', `%${parsedQuery.search}%`)
+
+      const emailMatchIds = (!emailSearchResult.error ? (emailSearchResult.data ?? []) : []).map(
+        (u) => u.account_id,
+      )
+
+      if (emailMatchIds.length > 0) {
+        contactsQuery = contactsQuery.or(
+          `nickname.ilike.%${parsedQuery.search}%,target_account_id.in.(${emailMatchIds.join(',')})`,
+        )
+      } else {
+        contactsQuery = contactsQuery.ilike('nickname', `%${parsedQuery.search}%`)
+      }
     }
 
     const contactsResult = await contactsQuery.range(from, to)

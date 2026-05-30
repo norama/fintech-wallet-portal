@@ -10,9 +10,10 @@ import {
   TRANSACTION_TYPE_OPTIONS,
   type TransactionsQueryParams,
 } from '@/features/transactions/types'
+import { useDebouncedSearch } from '@/lib/hooks/useDebouncedSearch'
 import type { TransactionsFilterWallet } from '@/lib/types/api'
 
-const pageSizeOptions = [10, 20, 50] as const
+const pageSizeOptions = [5, 10, 20, 50] as const
 
 function toLabel(value: string) {
   return value
@@ -48,6 +49,9 @@ export function TransactionFilters({
   onUpdateFilters,
   onClearFilters,
 }: TransactionFiltersProps) {
+  const searchProps = useDebouncedSearch(activeFilters.search, (value) =>
+    onUpdateFilters({ search: value }, { resetPage: true }),
+  )
   return (
     <Card tone='transaction' eyebrow='Transaction filters' title='Filters'>
       <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
@@ -55,14 +59,8 @@ export function TransactionFilters({
           <Field htmlFor='transactions-search' label='Search'>
             <SearchInput
               id='transactions-search'
-              value={activeFilters.search ?? ''}
-              onChange={(event) => {
-                onUpdateFilters({ search: event.target.value || undefined }, { resetPage: true })
-              }}
-              onClear={() => {
-                onUpdateFilters({ search: undefined }, { resetPage: true })
-              }}
-              placeholder='Search counterparty or reference'
+              {...searchProps}
+              placeholder='Search counterparty, type, status or reference'
             />
           </Field>
         </div>
@@ -144,9 +142,9 @@ export function TransactionFilters({
             onChange={(event) => {
               onUpdateFilters({ pageSize: Number(event.target.value) }, { resetPage: false })
             }}>
-            {pageSizeOptions.map((pageSize) => (
-              <option key={pageSize} value={pageSize}>
-                {pageSize} per page
+            {pageSizeOptions.map((size) => (
+              <option key={size} value={size}>
+                {size} per page
               </option>
             ))}
           </Select>

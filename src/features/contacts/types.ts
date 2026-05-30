@@ -1,5 +1,7 @@
 import { contactListQuerySchema, type ContactListQuery } from '@/lib/validation/contactSchemas'
 
+export const DEFAULT_CONTACTS_PAGE_SIZE = 10
+
 export type ContactsQueryParams = {
   search?: string | undefined
   page?: number | undefined
@@ -38,7 +40,7 @@ export function toContactsSearchParams(params: ContactsQueryParams = {}) {
     searchParams.set('page', String(normalized.page))
   }
 
-  if (normalized.pageSize !== 20) {
+  if (normalized.pageSize !== DEFAULT_CONTACTS_PAGE_SIZE) {
     searchParams.set('pageSize', String(normalized.pageSize))
   }
 
