@@ -193,6 +193,20 @@ Backend:
 
 The LLM never receives direct database access.
 
+```
+AI Assistant UI
+        │
+POST /api/insights
+        │
+OpenAI Responses API
+        │
+Tool Calls
+        │
+Insight Tools
+        │
+Supabase
+```
+
 ### Available Tools
 
 #### get_wallet_summary
