@@ -160,6 +160,114 @@ For own-wallet transfers, two transaction rows are created with the same generat
 
 ---
 
+## AI Insights Assistant
+
+The application includes an AI-powered assistant that can answer questions about the currently authenticated account.
+
+### Features
+
+- Conversational chat interface available throughout the application
+- Context-aware follow-up questions
+- OpenAI function/tool calling
+- Real-time access to account data through backend tools
+- No direct database access from the LLM
+- No direct OpenAI access from the frontend
+
+### Architecture
+
+The AI assistant is implemented using OpenAI Responses API tool calling.
+
+Frontend:
+
+- Floating AI assistant widget
+- Conversation history stored in component state
+- Requests sent to `POST /api/insights`
+- Recent conversation history included with each request
+
+Backend:
+
+- Validates the authenticated user session
+- Resolves the current account from the session
+- Executes tool calls on behalf of the LLM
+- Returns only data belonging to the authenticated account
+
+The LLM never receives direct database access.
+
+### Available Tools
+
+#### get_wallet_summary
+
+Provides:
+
+- Wallet balances
+- Available balances
+- Reserved balances
+- Wallet statuses
+- Primary wallet information
+
+#### get_recent_transactions
+
+Provides:
+
+- Recent transaction activity
+- Filtering by status
+- Filtering by currency
+- Filtering by direction
+- Optional date ranges
+
+#### get_transaction_totals
+
+Provides:
+
+- Aggregated incoming and outgoing totals
+- Transaction statistics
+- Currency-specific summaries
+- Operational reporting data
+
+#### get_attention_items
+
+Provides:
+
+- Pending transactions
+- Transactions requiring review
+- Failed transactions
+- Wallets with limited or suspended status
+
+#### get_fx_rates
+
+Provides the mock FX rates used by the demo for currency conversion and cross-currency balance summaries.
+
+### Security Model
+
+The assistant operates under the same account boundaries as the rest of the application.
+
+The authenticated account is resolved from the server-side session and injected into tool execution by the backend.
+
+The LLM cannot:
+
+- Access arbitrary accounts
+- Modify data
+- Execute payments
+- Bypass authorization rules
+
+### Example Questions
+
+- Which transactions require attention?
+- Why is my available balance lower than my total balance?
+- Summarize recent outgoing payments.
+- How much money do I have in EUR?
+- Which wallets contain reserved funds?
+- What was my largest payment this month?
+
+### Notes
+
+- The AI assistant is intended for operational insights and exploration of account data.
+- FX rates are mocked for demonstration purposes.
+- Conversation history is stored client-side for the current session.
+- This implementation demonstrates a tool-calling architecture rather than direct database access from the language model.
+
+---
+
 ## API Architecture
 
 The frontend talks to Next.js API routes, not directly to Supabase.
@@ -173,12 +281,13 @@ Client UI
 
 Implemented route groups include:
 
-- /api/auth/\*
+- /api/auth
 - /api/dashboard
 - /api/transactions
 - /api/payments/options
 - /api/payments/preview
 - /api/payments/submit
+- /api/insights/ask
 
 Server routes validate input with Zod and scope data to the authenticated account.
 
