@@ -3,6 +3,7 @@ import 'server-only'
 import { z } from 'zod'
 
 import { toCamelCaseDeep } from '@/lib/api/responses'
+import { FX_RATES } from '@/lib/payments/fxRates'
 import type {
   CurrencyCode,
   TransactionDirection,
@@ -355,5 +356,16 @@ export async function getAttentionItems(accountId: string): Promise<AttentionIte
     pendingTransactions,
     failedTransactions,
     limitedOrSuspendedWallets,
+  }
+}
+
+// ── Currency conversion rates ───────────────────────────────────────────────
+
+// (This would require an external API in a real implementation, so we'll skip it here)
+
+export async function getCurrencyConversionRates() {
+  return {
+    rates: FX_RATES,
+    note: 'FX rates are mocked for demo purposes.',
   }
 }

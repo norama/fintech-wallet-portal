@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
-type ButtonSize = 'sm' | 'md' | 'lg'
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'chip'
+type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'icon'
 
 type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'> & {
   children: ReactNode
@@ -17,12 +17,15 @@ const variantClasses: Record<ButtonVariant, string> = {
   ghost:
     'bg-transparent text-zinc-700 hover:bg-zinc-100 hover:text-zinc-600 disabled:text-zinc-400',
   danger: 'bg-red-600 text-white hover:bg-red-500 disabled:bg-red-200 disabled:text-red-400',
+  chip: 'border border-zinc-200 bg-zinc-50 text-zinc-700 hover:border-zinc-400 hover:bg-white disabled:opacity-50',
 }
 
 const sizeClasses: Record<ButtonSize, string> = {
+  xs: 'rounded-xl px-3 py-1.5 text-xs',
   sm: 'h-9 rounded-xl px-3 text-sm',
   md: 'h-11 rounded-2xl px-4 text-sm',
   lg: 'h-12 rounded-2xl px-5 text-base',
+  icon: 'h-8 w-8 rounded-lg p-0',
 }
 
 export function Button({

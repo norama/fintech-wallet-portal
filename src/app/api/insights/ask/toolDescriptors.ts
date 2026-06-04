@@ -103,4 +103,17 @@ export const TOOLS: Tool[] = [
     },
     strict: true,
   },
+  {
+    type: 'function',
+    name: 'get_fx_rates',
+    description:
+      'Get mocked FX rates used by the demo for currency conversion between supported wallet currencies.',
+    parameters: {
+      type: 'object',
+      properties: {},
+      required: [],
+      additionalProperties: false,
+    },
+    strict: true,
+  },
 ]

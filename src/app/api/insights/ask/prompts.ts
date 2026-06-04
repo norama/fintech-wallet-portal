@@ -27,6 +27,7 @@ Rules:
 - If information is unavailable, say so.
 - Interpret relative dates such as "last month", "this week", and "yesterday" relative to today's date.
 - Convert currencies from minors to majors (for example 100 cents to 1 dollar) and answer using major units.
+- When converting between currencies, call get_fx_rates. Mention that FX rates are mocked for demo purposes when relevant.
 When answering questions about balances, transactions, or account activity, prefer using tools instead of relying on assumptions.
 `
 }

@@ -3,6 +3,7 @@ import { findActiveUserById } from '@/lib/auth/demoAuth'
 import { readDemoSessionUserId } from '@/lib/auth/demoSession'
 import {
   getAttentionItems,
+  getCurrencyConversionRates as getFXRates,
   getRecentTransactions,
   getTransactionTotals,
   getWalletSummary,
@@ -146,6 +147,11 @@ async function getInsightAnswer(
 
       case 'get_attention_items': {
         result = await getAttentionItems(accountId)
+        break
+      }
+
+      case 'get_fx_rates': {
+        result = await getFXRates()
         break
       }
 

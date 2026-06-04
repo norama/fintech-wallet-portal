@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState, type ReactNode } from 'react'
 
+import { InsightsWidget } from '@/features/insights/components/InsightsWidget'
 import { NavigationGuardProvider } from '@/lib/navigation/NavigationGuardContext'
 
 type AppQueryProviderProps = {
@@ -28,6 +29,7 @@ export function AppQueryProvider({ children }: AppQueryProviderProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <NavigationGuardProvider>{children}</NavigationGuardProvider>
+      <InsightsWidget />
     </QueryClientProvider>
   )
 }
