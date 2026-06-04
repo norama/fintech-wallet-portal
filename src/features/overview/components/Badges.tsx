@@ -19,6 +19,14 @@ function formatLabel(value: string) {
     .join(' ')
 }
 
+const labelOverrides: Partial<Record<string, string>> = {
+  bank_transfer: 'Transfer',
+  internal_transfer: 'Internal',
+  card_payment: 'Card',
+  fx_conversion: 'Conversion',
+  requires_review: 'Review',
+}
+
 export function CurrencyPill({
   currency,
   isPrimary = false,
@@ -57,11 +65,13 @@ export function TransactionStatusBadge({ status }: { status: TransactionStatus }
   const tone =
     status === 'completed'
       ? 'positive'
-      : status === 'pending' || status === 'requires_review'
-        ? 'warning'
-        : 'critical'
+      : status === 'requires_review'
+        ? 'info'
+        : status === 'pending'
+          ? 'warning'
+          : 'critical'
 
-  return <Badge tone={tone}>{formatLabel(status)}</Badge>
+  return <Badge tone={tone}>{labelOverrides[status] ?? formatLabel(status)}</Badge>
 }
 
 export function TransactionDirectionBadge({ direction }: { direction: TransactionDirection }) {
@@ -79,7 +89,7 @@ export function TransactionTypeBadge({ type }: { type: TransactionType }) {
       fee: 'critical',
       fx_conversion: 'positive',
     }
-  return <Badge tone={toneMap[type]}>{formatLabel(type)}</Badge>
+  return <Badge tone={toneMap[type]}>{labelOverrides[type] ?? formatLabel(type)}</Badge>
 }
 
 export function CounterpartyTypeBadge({ type }: { type: CounterpartyType }) {
