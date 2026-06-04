@@ -1,5 +1,5 @@
 @baseUrl = http://localhost:3000
-@sessionCookie = 22222222-2222-2222-2222-222222222222
+@sessionCookie = b1000000-0000-4000-8000-000000000001
 
 ###############
 ### OPTIONS ###
@@ -20,10 +20,10 @@ Cookie: fintech_wallet_session={{sessionCookie}}
 
 {
   "paymentType": "external_transfer",
-  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "sourceWalletId": "c1000000-0000-4000-8000-000000000001",
   "recipientAccountRef": "DE99••••1234",
   "recipientName": "Test Supplier Ltd.",
-  "amountMinor": 250000,
+  "amountMinor": 2500,
   "paymentNote": "Invoice 2026-0421"
 }
 
@@ -35,9 +35,9 @@ Cookie: fintech_wallet_session={{sessionCookie}}
 
 {
   "paymentType": "external_transfer",
-  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "sourceWalletId": "c1000000-0000-4000-8000-000000000001",
   "recipientAccountRef": "DE99••••1234",
-  "amountMinor": 250000,
+  "amountMinor": 2500,
   "paymentNote": "External payment without resolved name"
 }
 
@@ -172,7 +172,7 @@ Cookie: fintech_wallet_session={{sessionCookie}}
   "sourceWalletId": "33333333-3333-3333-3333-333333333333",
   "recipientAccountRef": "DE99••••1234",
   "recipientName": "Test Supplier Ltd.",
-  "amountMinor": 10000,
+  "amountMinor": 1000,
   "paymentNote": "REST test external payment",
   "authorizationCode": "123456"
 }
@@ -197,10 +197,10 @@ Cookie: fintech_wallet_session={{sessionCookie}}
 
 {
   "paymentType": "internal_contact_transfer",
-  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "sourceWalletId": "c1000000-0000-4000-8000-000000000001",
   "contactId": "{{contactId}}",
   "targetCurrency": "EUR",
-  "amountMinor": 50000,
+  "amountMinor": 10000,
   "paymentNote": "Reimbursement for team lunch"
 }
 
@@ -213,7 +213,7 @@ Cookie: fintech_wallet_session={{sessionCookie}}
 
 {
   "paymentType": "internal_contact_transfer",
-  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "sourceWalletId": "c1000000-0000-4000-8000-000000000001",
   "contactId": "{{contactId}}",
   "targetCurrency": "CZK",
   "amountMinor": 50000,
@@ -229,7 +229,7 @@ Cookie: fintech_wallet_session={{sessionCookie}}
 
 {
   "paymentType": "internal_contact_transfer",
-  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "sourceWalletId": "c1000000-0000-4000-8000-000000000001",
   "contactId": "{{contactId}}",
   "targetCurrency": "EUR",
   "amountMinor": 10000,
@@ -285,7 +285,7 @@ Cookie: fintech_wallet_session={{sessionCookie}}
 
 {
   "paymentType": "external_transfer",
-  "sourceWalletId": "33333333-3333-3333-3333-333333333333",
+  "sourceWalletId": "c1000000-0000-4000-8000-000000000001",
   "recipientAccountRef": "NL22••••8890",
   "amountMinor": 5000,
   "paymentNote": "External payment without resolved recipient name",

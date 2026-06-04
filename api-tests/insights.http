@@ -1,0 +1,44 @@
+@baseUrl = http://localhost:3000
+@sessionCookie = b1000000-0000-4000-8000-000000000001
+
+###########
+### ASK ###
+###########
+
+### Ask insight — totals by currency
+POST {{baseUrl}}/api/insights/ask
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "prompt": "What are totals by currency?"
+}
+
+### Another question
+POST {{baseUrl}}/api/insights/ask
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "prompt": "What needs attention?"
+}
+
+
+### Another question to test conversation history
+POST {{baseUrl}}/api/insights/ask
+Content-Type: application/json
+Cookie: fintech_wallet_session={{sessionCookie}}
+
+{
+  "history": [
+    {
+      "role": "user",
+      "content": "Which transactions need attention?"
+    },
+    {
+      "role": "assistant",
+      "content": "There is a pending payment."
+    }
+  ],
+  "prompt": "Can you explain why?"
+}

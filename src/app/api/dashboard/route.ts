@@ -14,7 +14,6 @@ export async function GET() {
   }
 
   try {
-    const supabase = createSupabaseServerClient()
     const user = await findActiveUserById(sessionUserId)
 
     if (!user) {
@@ -22,6 +21,8 @@ export async function GET() {
     }
 
     const accountId = user.account_id
+
+    const supabase = createSupabaseServerClient()
     const walletQuery = await supabase.from('wallets').select('*').eq('account_id', accountId)
 
     if (walletQuery.error) {
