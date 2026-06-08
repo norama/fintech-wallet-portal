@@ -23,8 +23,6 @@ This is not a production banking system. The goal is to demonstrate frontend arc
 To sign in, use any of these demo e-mails:
 
 ```
-finance@corp.com
-john.smith@example.com
 alice@test.com
 bob@test.com
 cecile@test.com
@@ -307,7 +305,7 @@ Server routes validate input with Zod and scope data to the authenticated accoun
 
 Demo Credentials
 
-- E-mail: finance@corp.com
+- E-mail: alice@test.com
 - Verification code: 123456
 
 The verification code is demo-only and represents a banking-style mobile app / authenticator confirmation.
