@@ -71,7 +71,7 @@ A simplified banking-style sign-in flow:
 
 Authentication is intentionally mocked. In a real product, this would be delegated to a secure identity provider or banking authentication backend.
 
-#### Overview Dashboard
+#### Dashboard Overview
 
 The dashboard shows:
 
@@ -82,6 +82,8 @@ The dashboard shows:
 - operational alerts
 - recent transaction activity
 - activity summary
+
+The dashboard overview is rendered with Next.js Server Components. Account data is loaded server-side from Supabase using the authenticated session, avoiding an extra client-side API round trip for the initial dashboard view.
 
 #### Transactions
 
