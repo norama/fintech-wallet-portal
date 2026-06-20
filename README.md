@@ -1,6 +1,6 @@
 # Fintech Wallet Portal
 
-A frontend-focused fintech wallet / internet banking prototype built to demonstrate React + TypeScript architecture, API-driven UI, server-side validation, and product thinking for money movement workflows.
+AI-assisted frontend-focused FinTech demo, built iteratively with Copilot Agent; built to demonstrate React + TypeScript architecture, API-driven UI, server-side validation, and product thinking for money movement workflows.
 
 The current demo focuses on a wallet account experience with:
 
