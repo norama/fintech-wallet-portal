@@ -22,7 +22,7 @@ export const askInsightRequestSchema = z.object({
   threadId: z.uuid().default(() => crypto.randomUUID()),
 })
 
-//type AskInsightRequest = z.infer<typeof askInsightRequestSchema>
+// type AskInsightRequest = z.infer<typeof askInsightRequestSchema>
 // type InsightHistoryMessage = AskInsightRequest['history'][number]
 
 export async function POST(request: Request) {
