@@ -1,21 +1,12 @@
 import { jsonError } from '@/lib/api/responses'
 import { findActiveUserById } from '@/lib/auth/demoAuth'
 import { readDemoSessionUserId } from '@/lib/auth/demoSession'
-import {
-  getAttentionItems,
-  getCurrencyConversionRates as getFXRates,
-  getRecentTransactions,
-  getTransactionTotals,
-  getWalletSummary,
-} from '@/lib/insights/tools'
 import { createOpenAILangchainAgent } from '@/lib/openai/langchainAgent'
 import { createOpenAIServerClient } from '@/lib/openai/server'
-import { ResponseInput, ResponseInputItem, Tool } from 'openai/resources/responses/responses'
+import { ResponseInput, Tool } from 'openai/resources/responses/responses'
 import z from 'zod'
 import { buildLangchainInsightsSystemPrompt } from './langchainPrompts'
 import { LANGCHAIN_TOOLS } from './langchainToolDescriptors'
-import { buildInsightsFinalAnswerPrompt, buildInsightsSystemPrompt } from './prompts'
-import { TOOLS } from './toolDescriptors'
 
 export const dynamic = 'force-dynamic'
 
@@ -108,6 +99,7 @@ async function getLangchainInsightAnswer(accountId: string, threadId: string, pr
 }
 
 // OLD code, without LangChain, kept for reference. We may want to delete it later.
+/*
 async function getInsightAnswer(
   accountId: string,
   prompt: string,
@@ -234,6 +226,7 @@ async function getInsightAnswer(
     usedTools,
   }
 }
+*/
 
 /**
  * Example GET endpoint for testing only.
