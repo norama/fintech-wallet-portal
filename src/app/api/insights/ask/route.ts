@@ -8,9 +8,12 @@ import {
   getTransactionTotals,
   getWalletSummary,
 } from '@/lib/insights/tools'
+import { createOpenAILangchainAgent } from '@/lib/openai/langchainAgent'
 import { createOpenAIServerClient } from '@/lib/openai/server'
 import { ResponseInput, ResponseInputItem, Tool } from 'openai/resources/responses/responses'
 import z from 'zod'
+import { buildLangchainInsightsSystemPrompt } from './langchainPrompts'
+import { LANGCHAIN_TOOLS } from './langchainToolDescriptors'
 import { buildInsightsFinalAnswerPrompt, buildInsightsSystemPrompt } from './prompts'
 import { TOOLS } from './toolDescriptors'
 
@@ -25,6 +28,7 @@ export const askInsightRequestSchema = z.object({
   prompt: z.string().trim().min(1).max(1000),
 
   history: z.array(insightHistoryMessageSchema).max(10).default([]),
+  threadId: z.uuid().default(() => crypto.randomUUID()),
 })
 
 type AskInsightRequest = z.infer<typeof askInsightRequestSchema>
@@ -53,7 +57,7 @@ export async function POST(request: Request) {
     return jsonError(400, 'VALIDATION_ERROR', 'Invalid insight request')
   }
 
-  const { prompt, history } = parsed.data
+  const { prompt, history, threadId } = parsed.data
 
   try {
     const user = await findActiveUserById(sessionUserId)
@@ -64,12 +68,41 @@ export async function POST(request: Request) {
 
     const accountId = user.account_id
 
-    const insight = await getInsightAnswer(accountId, prompt, history)
+    //const insight = await getInsightAnswer(accountId, prompt, history)
+    const insight = await getLangchainInsightAnswer(accountId, threadId, prompt)
 
     return Response.json(insight)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to load insights'
     return jsonError(500, 'INSIGHTS_LOAD_FAILED', message)
+  }
+}
+
+async function getLangchainInsightAnswer(accountId: string, threadId: string, prompt: string) {
+  const threadConfig = { configurable: { thread_id: threadId }, context: { accountId } }
+
+  const today = new Date().toISOString().slice(0, 10)
+  const agent = await createOpenAILangchainAgent(
+    LANGCHAIN_TOOLS,
+    buildLangchainInsightsSystemPrompt(today),
+  )
+
+  // Log objects, such as message history or state
+  const state = await agent.getState(threadConfig)
+  const priorMessageCount = ((state['values']['messages'] as unknown[]) ?? []).length
+  console.log('Current thread state:', {
+    thread_id: threadId,
+    state,
+    messageCount: priorMessageCount,
+  })
+
+  const result = await agent.invoke({ messages: [{ role: 'user', content: prompt }] }, threadConfig)
+  const response = result.messages.at(-1)?.content
+
+  const newMessages = result.messages.slice(priorMessageCount)
+  return {
+    answer: response ?? 'No answer generated',
+    usedTools: newMessages.filter((msg) => msg.type === 'tool').map((msg) => msg.name),
   }
 }
 

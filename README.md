@@ -175,14 +175,14 @@ The application includes an AI-powered assistant that can answer questions about
 
 ### Architecture
 
-The AI assistant is implemented using OpenAI Responses API tool calling.
+The AI assistant is implemented using [LangChain](https://docs.langchain.com/oss/javascript/langchain/overview) -> OpenAI Responses API tool calling.
 
 Frontend:
 
 - Floating AI assistant widget
-- Conversation history stored in component state
+- Conversation thread ID stored in component state
 - Requests sent to `POST /api/insights`
-- Recent conversation history included with each request
+- Recent conversation thread ID included with each request
 
 Backend:
 
@@ -198,7 +198,7 @@ AI Assistant UI
         │
 POST /api/insights
         │
-OpenAI Responses API
+LangChain with OpenAI modul
         │
 Tool Calls
         │

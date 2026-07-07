@@ -103,6 +103,7 @@ export const TOOLS: Tool[] = [
     },
     strict: true,
   },
+
   {
     type: 'function',
     name: 'get_fx_rates',

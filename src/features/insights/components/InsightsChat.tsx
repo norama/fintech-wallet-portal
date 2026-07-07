@@ -28,6 +28,7 @@ export function InsightsChat({ onClose }: Props) {
   const [pendingUserInput, setPendingUserInput] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const threadIdRef = useRef<string>(crypto.randomUUID()) // Unique thread ID for the chat session
 
   const mutation = useAskInsight()
 
@@ -54,7 +55,7 @@ export function InsightsChat({ onClose }: Props) {
       .map((m) => ({ role: m.role, content: m.content }))
 
     mutation.mutate(
-      { prompt: pendingUserInput, history },
+      { prompt: pendingUserInput, history, threadId: threadIdRef.current },
       {
         onSuccess: (data) => {
           setMessages((prev) => [
@@ -83,6 +84,7 @@ export function InsightsChat({ onClose }: Props) {
     setInput('')
     setPendingUserInput(null)
     mutation.reset()
+    threadIdRef.current = crypto.randomUUID() // Reset thread ID for a new conversation
   }
 
   function handleEditAndRetry() {

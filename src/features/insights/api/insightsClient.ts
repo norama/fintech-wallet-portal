@@ -12,6 +12,7 @@ export type AskInsightHistoryMessage = {
 
 export type AskInsightRequest = {
   prompt: string
+  threadId: string
   history?: AskInsightHistoryMessage[]
 }
 
