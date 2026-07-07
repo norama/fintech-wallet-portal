@@ -57,7 +57,8 @@ export async function POST(request: Request) {
     return jsonError(400, 'VALIDATION_ERROR', 'Invalid insight request')
   }
 
-  const { prompt, history, threadId } = parsed.data
+  // history is not used in the LangChain implementation, but we keep it for backward compatibility
+  const { prompt, /* history, */ threadId } = parsed.data
 
   try {
     const user = await findActiveUserById(sessionUserId)
@@ -106,6 +107,7 @@ async function getLangchainInsightAnswer(accountId: string, threadId: string, pr
   }
 }
 
+// OLD code, without LangChain, kept for reference. We may want to delete it later.
 async function getInsightAnswer(
   accountId: string,
   prompt: string,
